@@ -10,4 +10,6 @@ def test_service() -> None:
         service = SlackBoltService(config)
         assert service.slack_bolt == mock_app_class.return_value
         assert service.slack == service.slack_bolt.client
-        mock_app_class.assert_called_with(signing_secret=config['secret'], token=config['token'])
+        mock_app_class.assert_called_with(
+            signing_secret=config['secret'], token=config['token']
+        )

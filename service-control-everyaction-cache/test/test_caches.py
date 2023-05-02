@@ -1,4 +1,6 @@
-from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import (
+    Callable, Mapping, MutableMapping, MutableSequence, Sequence
+)
 from unittest.mock import Mock
 
 import pytest
@@ -6,7 +8,9 @@ from everyaction import EAClient
 from everyaction.objects import ActivistCode, ChangedEntityField, ChangeType
 from everyaction.services import ActivistCodes, ChangedEntities
 
-from servicecontrol.everyaction.cache import EACacheService, IDNameListCache, NameListCache, ResourceNameListCaches
+from servicecontrol.everyaction.cache import (
+    EACacheService, IDNameListCache, NameListCache, ResourceNameListCaches
+)
 
 
 @pytest.fixture
@@ -26,8 +30,11 @@ def activist_codes_list() -> list[ActivistCode]:
 
 
 @pytest.fixture
-def list_fn(activist_codes_list: MutableSequence[ActivistCode]) -> Callable[[], MutableSequence[ActivistCode]]:
-    # Returns the contents of activist_codes_list, which may be modified as needed by tests.
+def list_fn(
+    activist_codes_list: MutableSequence[ActivistCode]
+) -> Callable[[], MutableSequence[ActivistCode]]:
+    # Returns the contents of activist_codes_list, which may be modified as
+    # needed by tests.
     return lambda: activist_codes_list
 
 
@@ -52,13 +59,15 @@ def resource_to_change_types() -> dict[str, list[ChangeType]]:
 
 @pytest.fixture
 def resource_to_change_types_dict() -> dict:
-    # Return a dictionary of resource names to sequences of ChangeTypes that can be mutated to modify caches.
+    # Return a dictionary of resource names to sequences of ChangeTypes that can
+    # be mutated to modify caches.
     return {}
 
 
 @pytest.fixture
 def resource_to_fields() -> dict[str, list[ChangedEntityField]]:
-    # Provide mapping from resource names to dummy ChangedEntityFields for testing.
+    # Provide mapping from resource names to dummy ChangedEntityFields for
+    # testing.
     return {
         'resource 1': [
             ChangedEntityField(name='field 1')
@@ -79,7 +88,8 @@ def resource_to_fields() -> dict[str, list[ChangedEntityField]]:
 def resource_to_list_fn(
     resource_to_change_types_dict: MutableMapping[str, Sequence[ChangeType]]
 ) -> Callable[[str], Sequence[ChangeType]]:
-    # Returns the contents of resource_to_change_types_dict, which may be modified as needed by tests.
+    # Returns the contents of resource_to_change_types_dict, which may be
+    # modified as needed by tests.
     return lambda r: resource_to_change_types_dict[r]
 
 
@@ -145,16 +155,24 @@ def test_resource_name_list_caches(
         # noinspection PyStatementEffect
         caches['resource 1']
 
-    resource_to_change_types_dict['resource 1'] = resource_to_change_types['resource 1']
+    resource_to_change_types_dict[
+        'resource 1'
+    ] = resource_to_change_types['resource 1']
     assert caches['resource 1'][1] == resource_to_change_types['resource 1'][0]
-    assert caches['resource 1']['type 1'] == resource_to_change_types['resource 1'][0]
+    assert caches['resource 1']['type 1'] == resource_to_change_types[
+        'resource 1'
+    ][0]
     assert caches['resource 1'].get('type 2') is None
     assert caches.get('resource 2') is None
 
-    resource_to_change_types_dict['resource 2'] = resource_to_change_types['resource 2']
+    resource_to_change_types_dict['resource 2'] = resource_to_change_types[
+        'resource 2'
+    ]
     assert caches['resource 1'].get(2) is None
     assert caches['resource 2'].get('type 1') is None
-    assert caches['resource 2']['type 2'] == resource_to_change_types['resource 2'][0]
+    assert caches['resource 2']['type 2'] == resource_to_change_types[
+        'resource 2'
+    ][0]
     assert caches['resource 2'][3] == resource_to_change_types['resource 2'][1]
 
 
@@ -170,7 +188,9 @@ def test_service(
     mock_ea.activist_codes.list.return_value = activist_codes
 
     mock_ea.changed_entities = Mock(spec=ChangedEntities)
-    mock_ea.changed_entities.resources.return_value = list(resource_to_change_types.keys())
+    mock_ea.changed_entities.resources.return_value = list(
+        resource_to_change_types.keys()
+    )
 
     def change_types_fn(resource: str) -> Sequence[ChangeType]:
         return resource_to_change_types[resource]
@@ -186,6 +206,12 @@ def test_service(
 
     assert service.activist_codes_cache[2] == activist_codes[1]
     assert service.changed_entities == set()  # Should not be initialized yet.
-    assert service.change_types_cache['resource 1'][1] == resource_to_change_types['resource 1'][0]
-    assert service.changed_entities == {'resource 1', 'resource 2', 'resource 3'}
-    assert service.entity_fields_cache['resource 2']['FIELD 3'] == resource_to_fields['resource 2'][1]
+    assert service.change_types_cache[
+        'resource 1'
+    ][1] == resource_to_change_types['resource 1'][0]
+    assert service.changed_entities == {
+        'resource 1', 'resource 2', 'resource 3'
+    }
+    assert service.entity_fields_cache[
+        'resource 2'
+    ]['FIELD 3'] == resource_to_fields['resource 2'][1]

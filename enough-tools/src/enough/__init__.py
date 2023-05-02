@@ -1,8 +1,24 @@
 from enough.attrmap import AttrMap
 from enough.enumerrors import EnumErrors
-from enough.fn import bounds, concat, dag_stages, flatten, format_fields, format_table, fqln, identity, raises
+from enough.fn import (
+    bounds,
+    concat,
+    dag_stages,
+    flatten,
+    format_fields,
+    format_table,
+    fqln,
+    identity,
+    raises
+)
 from enough.fs import ls_recursive, replace, rm, temp_file_path
-from enough.importfns import checked_import, import_object, module_members, typed_import, typed_module_members
+from enough.importfns import (
+    checked_import,
+    import_object,
+    module_members,
+    typed_import,
+    typed_module_members
+)
 from enough.logging import FnLoggingHandler, SplitLevelLogger
 from enough.types import (
     Catchable,

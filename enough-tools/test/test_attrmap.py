@@ -4,7 +4,8 @@ import pytest
 
 
 def test_attr_map() -> None:
-    # Test AttrMap, a wrapped around an object which serves as a mapping from that objects attributes to their values.
+    # Test AttrMap, a wrapped around an object which serves as a mapping from
+    # that objects attributes to their values.
     class A:
         def __init__(self) -> None:
             self.attr1 = 1
@@ -40,7 +41,16 @@ def test_attr_map() -> None:
     assert len(mapping) == len(dir(obj))
 
     assert {
-        k: mapping[k] for k in ('__init__', 'attr1', '_attr2', '__attr3__', 'method', 'prop', 'clsmethod', 'static')
+        k: mapping[k] for k in (
+            '__init__',
+            'attr1',
+            '_attr2',
+            '__attr3__',
+            'method',
+            'prop',
+            'clsmethod',
+            'static'
+        )
     } == {
         '__init__': obj.__init__,
         'attr1': 1,

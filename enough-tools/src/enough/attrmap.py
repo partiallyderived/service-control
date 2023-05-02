@@ -2,8 +2,8 @@ from collections.abc import Iterator, Mapping
 
 
 class AttrMap(Mapping[str, object]):
-    """Mapping which acts as a wrapper around an object, using :code:`getattr` for that object in order to implement
-    :code:`__getitem__`.
+    """Mapping which acts as a wrapper around an object, using ``getattr`` for
+    that object in order to implement ``__getitem__``.
     """
     #: The wrapped object.
     wrapped: object
@@ -16,11 +16,12 @@ class AttrMap(Mapping[str, object]):
         self.wrapped = obj
 
     def __getitem__(self, attr: str) -> object:
-        """Gets the value of the requested attribute in :code:`self.wrapped`.
+        """Gets the value of the requested attribute in ``self.wrapped``.
 
         :param attr: Name of the attribute to get.
         :return: The resulting value.
-        :raise KeyError: If `getattr(self.wrapped, attr)` raises an :code:`AttributeError`.
+        :raise KeyError: If `getattr(self.wrapped, attr)` raises an
+            ``AttributeError``.
         """
         try:
             return getattr(self.wrapped, attr)
@@ -28,17 +29,17 @@ class AttrMap(Mapping[str, object]):
             raise KeyError(*e.args)
 
     def __iter__(self) -> Iterator[str]:
-        """Returns an iterator over the attributes of :code:`self.wrapped`. Uses :code:`dir`, results will not be
-        accurate when :code:`dir` is inaccurate.
+        """Returns an iterator over the attributes of ``self.wrapped``. Uses
+        ``dir``, results will not be accurate when ``dir`` is inaccurate.
 
-        :return: An iterator over the attributes of :code:`self.wrapped`.
+        :return: An iterator over the attributes of ``self.wrapped``.
         """
         return iter(dir(self.wrapped))
 
     def __len__(self) -> int:
-        """Gets the number of attributes of :code:`self.wrapped`. Uses :code:`dir`, results will not be accurate when
-        :code:`dir` is inaccurate.
+        """Gets the number of attributes of ``self.wrapped``. Uses ``dir``,
+        results will not be accurate when ``dir`` is inaccurate.
 
-        :return: The number of attributes of :code:`self.wrapped`.
+        :return: The number of attributes of ``self.wrapped``.
         """
         return len(dir(self.wrapped))

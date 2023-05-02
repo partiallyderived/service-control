@@ -10,7 +10,8 @@ VALID_WORD: Final[Pattern] = re.compile(r'[a-zA-Z0-9-]+')
 
 
 def expand_args(path: Sequence[str], kwargs: Mapping[str, str]) -> str:
-    """Expands the given parsed command arguments by joining the expanded path and keyword arguments.
+    """Expands the given parsed command arguments by joining the expanded path
+    and keyword arguments.
 
     :param path: The path to expand.
     :param kwargs: The keyword arguments to expand.
@@ -20,7 +21,8 @@ def expand_args(path: Sequence[str], kwargs: Mapping[str, str]) -> str:
 
 
 def expand_kwargs(kwargs: Mapping[str, object]) -> str:
-    """Expands the given keyword arguments into a space-separated string of <key>=<value>.
+    """Expands the given keyword arguments into a space-separated string of
+    <key>=<value>.
 
     :param kwargs: Keyword arguments to expand.
     :return: The expanded string.
@@ -29,7 +31,8 @@ def expand_kwargs(kwargs: Mapping[str, object]) -> str:
 
 
 def expand_path(path: Sequence[str]) -> str:
-    """Expands the given path into a space-separated string of <edge 1>, <edge 2>, ...
+    """Expands the given path into a space-separated string of
+    <edge 1>, <edge 2>, ...
 
     :param path: The path to expand.
     :return: The expanded path.
@@ -45,11 +48,14 @@ def num_required_pos_args(fn: Callable) -> int:
     """
     spec = inspect.getfullargspec(fn)
     # Total pos args - defaults - self if it's a bound method.
-    return len(spec.args) - len(spec.defaults or ()) - bool(inspect.ismethod(fn))
+    return (
+        len(spec.args) - len(spec.defaults or ()) - bool(inspect.ismethod(fn))
+    )
 
 
 def uncapitalize(string: str) -> str:
-    """"Uncapitalize" a string by concatenating the lower-cased first character with the remaining of the string.
+    """"Uncapitalize" a string by concatenating the lower-cased first character
+    with the remaining of the string.
 
     :param string: String to "uncapitalize".
     :return: The uncapitalized string.

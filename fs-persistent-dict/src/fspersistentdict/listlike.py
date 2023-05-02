@@ -1,16 +1,15 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from collections.abc import Collection, Iterable, Iterator, MutableSequence
+from collections.abc import Iterable, Iterator, MutableSequence
+from typing import Generic
 
-from enough import Sentinel, T
+from enough import T
+
+import fspersistentdict.util as util
 
 
-def ensure_collection(values: Iterable[T]) -> Collection[T]:
-    return values if isinstance(values, Collection) else list(values)
-
-
-class ListLike(MutableSequence[T]):
+class ListLike(Generic[T], MutableSequence[T]):
     @classmethod
     def empty(cls) -> ListLike[T]:
         return cls()
@@ -33,7 +32,9 @@ class ListLike(MutableSequence[T]):
             case _:
                 return self.get_other(idx_or_slc)
 
-    def __setitem__(self, idx_or_slc: int | slice, value: T | Iterable[T]) -> None:
+    def __setitem__(
+        self, idx_or_slc: int | slice, value: T | Iterable[T]
+    ) -> None:
         match idx_or_slc:
             case int():
                 self.set_idx(self._real_idx(idx_or_slc), value)
@@ -42,10 +43,11 @@ class ListLike(MutableSequence[T]):
                     raise TypeError('can only assign an iterable')
                 rng = range(*idx_or_slc.indices(len(self)))
                 if rng.step != 1:
-                    values = ensure_collection(value)
+                    values = util.ensure_collection(value)
                     if len(rng) != len(values):
                         raise ValueError(
-                            f'attempt to assign sequence of size {len(values)} to extended slice of size {len(rng)}'
+                            f'attempt to assign sequence of size {len(values)} '
+                            f'to extended slice of size {len(rng)}'
                         )
                     self.set_range(rng, iter(values))
                 else:
@@ -107,14 +109,20 @@ class ListLike(MutableSequence[T]):
         return IndexError(f'{type(self)} index out of range')
 
     def idx_type_error(self, obj: object) -> TypeError:
-        return TypeError(f'{type(self).__name__} indices must be integers or slices, not {type(obj).__name__}')
+        return TypeError(
+            f'{type(self).__name__} indices must be integers or slices, not '
+            f'{type(obj).__name__}'
+        )
 
     def insert(self, idx: int, value: T) -> None:
-        self.set_range(range(idx, idx), value)
+        self.__setitem__(slice(idx, idx), value)
 
     # noinspection PyMethodMayBeStatic
     def not_int_error(self, obj: object) -> TypeError:
-        return TypeError(f"'{type(obj).__name__}' object cannot be interpreted as an integer")
+        return TypeError(
+            f"'{type(obj).__name__}' object cannot be interpreted as an "
+            f"integer"
+        )
 
     def pop(self, idx: int = -1) -> T:
         if not isinstance(idx, int):
@@ -124,95 +132,11 @@ class ListLike(MutableSequence[T]):
         self.del_idx(idx)
         return result
 
+    def set_other(self, obj: object, values: T | Iterable[T]) -> None:
+        raise self.idx_type_error(obj)
+
     def set_range(self, rng: range, values: Iterator[T]) -> int:
         i = 0
         for i, (j, value) in enumerate(zip(rng, values), 1):
             self.set_idx(j, value)
         return i
-
-    def set_other(self, obj: object, values: T | Iterable[T]) -> None:
-        raise self.idx_type_error(obj)
-
-
-class ShiftingSeq(ListLike[T]):
-    @abstractmethod
-    def grow(self, n: int) -> None:
-        ...
-
-    @abstractmethod
-    def truncate(self, n: int) -> None:
-        ...
-
-    def del_idx(self, idx: int) -> None:
-        self.shift_down(idx + 1, len(self), 1)
-
-    def del_range(self, rng: range) -> None:
-        if rng.step < 0:
-            rng = rng[::-1]
-        if rng.step > 1:
-            self.shift_down_blocks(rng)
-        self.shift_down(rng.start + rng.step * len(rng), len(self), len(rng))
-        self.truncate(len(rng))
-
-    def insert_many(self, at: int, values: Iterator[T]) -> None:
-        values = ensure_collection(values)
-        n = len(values)
-        self.grow(n)
-        self.shift_up(at, len(self), n)
-        for i, val in enumerate(values, at):
-            self.set_idx(i, val)
-
-    def move(self, src: int, dest: int) -> None:
-        self.set_idx(dest, self.get_idx(src))
-
-    def shift_down(self, start: int, stop: int, n: int) -> None:
-        for i in range(start, stop):
-            self.move(i, i - n)
-
-    def shift_down_blocks(self, rng: range) -> None:
-        for i, j in enumerate(rng, 1):
-            self.shift_down(j + 1, j + rng.step, i)
-
-    def shift_up(self, start: int, stop: int, n: int) -> None:
-        for i in reversed(range(start, stop)):
-            self.move(i, i + n)
-
-
-class SparseSeq(ShiftingSeq[T]):
-    #: The value which is used by default in place of missing values.
-    DEFAULT_MISSING: Sentinel = Sentinel()
-
-    # Variable which keeps track of the length of the SparseSeq.
-    _len: int
-
-    #: Underlying dictionary which keeps track of the explicitly set indices.
-    dct: dict[int, T]
-
-    #: Value to use for missing elements.
-    missing: object
-
-    def __init__(self, values: Iterable[T] = (), missing: object = DEFAULT_MISSING) -> None:
-        self._len = 0
-        self.dct = {}
-        self.missing = missing
-        self.extend(values)
-
-    def get_idx(self, idx: int) -> object:
-        return self.dct.get(idx, self.missing)
-
-    def grow(self, n: int) -> None:
-        self._len += n
-
-    def resize(self, new_size: int) -> None:
-        if new_size < len(self):
-            self.del_range(range(new_size, len(self)))
-        self._len = new_size
-
-    def set_idx(self, idx: int, value: T) -> None:
-        if value == self.missing:
-            self.dct.pop(idx, None)
-        else:
-            self.dct[idx] = value
-
-    def truncate(self, n: int) -> None:
-        self._len -= n

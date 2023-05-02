@@ -22,9 +22,12 @@ DELETED_ID: Final[int] = 3
 
 @pytest.fixture
 def change_types_cache() -> dict[str, dict[int | str, ChangeType]]:
-    # Creates a mapping to use as a stand-in for the "change_types_cache" __init__ argument.
+    # Creates a mapping to use as a stand-in for the "change_types_cache"
+    # __init__ argument.
     created_type = ChangeType(id=CREATED_ID, name='Created')
-    created_or_updated_type = ChangeType(id=CREATED_OR_UPDATED_ID, name='CreatedOrUpdated')
+    created_or_updated_type = ChangeType(
+        id=CREATED_OR_UPDATED_ID, name='CreatedOrUpdated'
+    )
     deleted_type = ChangeType(id=DELETED_ID, name='Deleted')
     change_types_cache = {
         'Contacts': {
@@ -51,7 +54,8 @@ def data() -> DataDict:
 
 @pytest.fixture
 def entity_fields_cache() -> dict[str, dict[str, ChangedEntityField]]:
-    # Creates a mapping to use as a stand-in for the "entity_fields_cache" __init__ argument.
+    # Creates a mapping to use as a stand-in for the "entity_fields_cache"
+    # __init__ argument.
     return {
         'Contacts': {
             'ChangeTypeID': ChangedEntityField(name='ChangeTypeID', type='N'),
@@ -64,7 +68,9 @@ def entity_fields_cache() -> dict[str, dict[str, ChangedEntityField]]:
             'VanID': ChangedEntityField(name='VanID', type='N')
         },
         'ContactsActivistCodes': {
-            'ActivistCodeID': ChangedEntityField(name='ActivistCodeID', type='N'),
+            'ActivistCodeID': ChangedEntityField(
+                name='ActivistCodeID', type='N'
+            ),
             'ChangeTypeID': ChangedEntityField(name='ChangeTypeID', type='N'),
             'VanID': ChangedEntityField(name='VanID', type='N')
         }
@@ -116,7 +122,8 @@ def service(
 
 
 def test_delete_handlers() -> None:
-    # Test that delete handlers update the state of a ContactUpdate so that the relevant data is deleted.
+    # Test that delete handlers update the state of a ContactUpdate so that the
+    # relevant data is deleted.
     update = ContactUpdate(1)
 
     # Values should be ignored for these.
@@ -126,7 +133,9 @@ def test_delete_handlers() -> None:
     EAContactsSyncService._DELETE_HANDLERS['LastName'](update, 'D')
 
     # Values matter for these.
-    EAContactsSyncService._DELETE_HANDLERS['PersonalEmail'](update, 'alice@alice.com')
+    EAContactsSyncService._DELETE_HANDLERS['PersonalEmail'](
+        update, 'alice@alice.com'
+    )
     EAContactsSyncService._DELETE_HANDLERS['Phone'](update, '1234567890')
 
     assert update.do_not_call == ''
@@ -142,14 +151,17 @@ def test_delete_handlers() -> None:
 
 
 def test_update_handlers() -> None:
-    # Test that delete handlers update the state of a ContactUpdate so that the relevant data is updated.
+    # Test that delete handlers update the state of a ContactUpdate so that the
+    # relevant data is updated.
     update = ContactUpdate(1)
 
     EAContactsSyncService._UPDATE_HANDLERS['DoNotCall'](update, True)
     EAContactsSyncService._UPDATE_HANDLERS['DoNotEmail'](update, False)
     EAContactsSyncService._UPDATE_HANDLERS['FirstName'](update, 'Alice')
     EAContactsSyncService._UPDATE_HANDLERS['LastName'](update, 'Allison')
-    EAContactsSyncService._UPDATE_HANDLERS['PersonalEmail'](update, 'alice@alice.com')
+    EAContactsSyncService._UPDATE_HANDLERS['PersonalEmail'](
+        update, 'alice@alice.com'
+    )
     EAContactsSyncService._UPDATE_HANDLERS['Phone'](update, '1234567890')
 
     assert update.do_not_call is True
@@ -302,7 +314,8 @@ def test_install(data: DataDict, service: EAContactsSyncService) -> None:
 
 
 def test_start(service: EAContactsSyncService) -> None:
-    # Test that EAContactsSyncService.start initializes cached fields to pass to EAClient.changed_entities.changes.
+    # Test that EAContactsSyncService.start initializes cached fields to pass to
+    # EAClient.changed_entities.changes.
 
     # Avoid scheduling anything.
     with mock.patch.object(service, '_scheduler', autospec=True):

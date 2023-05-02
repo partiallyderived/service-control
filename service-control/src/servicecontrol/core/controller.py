@@ -1,10 +1,11 @@
 from collections.abc import Mapping, Sequence
 from typing import Final
 
-import enough as br
-import jsonschema
+import enough
 from enough import EnumErrors, JSONType
-from enough.exceptions import BRFuncErrors
+from enough.exceptions import EnoughFuncErrors
+
+import jsonschema
 from jsonschema import ValidationError
 
 import servicecontrol.core.registrar as registrar
@@ -13,19 +14,24 @@ from servicecontrol.core.service import Service
 from servicecontrol.core.servicespec import ServiceSpec
 
 #: This str is shared in two error contexts.
-_BASE_MSG: Final[str] = 'Failed to start service {spec.name} ({spec.cls_name}): {_error_tb}'
+_BASE_MSG: Final[str] = (
+    'Failed to start service {spec.name} ({spec.cls_name}): {_error_tb}'
+)
 
 
 class ControllerErrors(EnumErrors[ServiceControlError]):
     """Exception types raised in servicecontrol.core.controller."""
-    CircularDependency = BRFuncErrors.CircularDependency._value_
+    CircularDependency = EnoughFuncErrors.CircularDependency._value_
     ExportCollision = (
-        'The following names belong to objects exported by two or more services:\n\n'
+        'The following names belong to objects exported by two or more '
+            'services:\n\n'
             ''
-            '{_br.format_table(collisions.items(), val_fn=lambda spec: spec.name)}\n\n'
+            '{_enough.format_table(collisions.items(), '
+            'val_fn=lambda spec: spec.name)}\n\n'
             ''
-            'Note: You can specify the key "$export-overrides" in service configs as a mapping from exported names '
-            'to names to override them with to avoid name collisions.',
+            'Note: You can specify the key "$export-overrides" in service '
+            'configs as a mapping from exported names to names to override them'
+            'with to avoid name collisions.',
         'collisions'
     )
     InitSpecs = (
@@ -35,19 +41,28 @@ class ControllerErrors(EnumErrors[ServiceControlError]):
         'errors'
     )
     JobFailed = (
-        'Failed to run job for service "{service.name}" ({service}): {_error_tb}\n'
+        'Failed to run job for service "{service.name}" ({service}): '
+            '{_error_tb}\n'
             'args: {args}',
         ('error', 'service', 'args')
     )
     NameCollision = (
         'The following names refer to multiple services:\n\n'
             ''
-            '{_br.format_table(collisions.items(), val_fn=lambda spec: spec.cls_name())}',
+            '{_enough.format_table(collisions.items(), val_fn=lambda spec: '
+            'spec.cls_name())}',
         'collisions'
     )
     NoSuchService = 'Could not find service named "{name}"', ('name',)
-    PurgeFailed = 'Failed to purge service "{service.name}" ({service}): {_error_tb}', ('service', 'error')
-    SchemaValidation = 'Controller config failed JSON validation: {_error_tb}', ('error', 'config')
+    PurgeFailed = (
+        'Failed to purge service "{service.name}" ({service}): '
+            '{_error_tb}',
+        ('service', 'error')
+    )
+    SchemaValidation = (
+        'Controller config failed JSON validation: {_error_tb}',
+        ('error', 'config')
+    )
     ServiceStart = (
         f'{_BASE_MSG}\n\n'
             f''
@@ -57,7 +72,8 @@ class ControllerErrors(EnumErrors[ServiceControlError]):
     ServiceStartStop = (
         f'{_BASE_MSG}\n\n'
             f''
-            f'Additional failures occurred when attempting to stop already started services in reverse order:\n\n'
+            f'Additional failures occurred when attempting to stop already '
+            f'started services in reverse order:\n\n'
             f''
             f'{{_fmt_error_map(lambda service: service.name)}}',
         ('error', 'errors', 'service', 'spec')
@@ -71,14 +87,15 @@ class ControllerErrors(EnumErrors[ServiceControlError]):
     UnsatisfiedDependencies = (
         'The following services have unsatisfied dependencies:\n\n'
             ''
-            '{_br.format_table(unsatisfied.items(), key_fn=lambda spec: spec.name)}',
+            '{_enough.format_table(unsatisfied.items(), key_fn=lambda spec: '
+            'spec.name)}',
         'unsatisfied'
     )
 
 
 class Controller:
-    """Instances of this class control services, including by starting and stopping them and managing their 
-    dependencies.
+    """Instances of this class control services, including by starting and
+    stopping them and managing their dependencies.
     """
     #: JSON Schema for the controller's config.
     SCHEMA: Final[JSONType] = {
@@ -97,14 +114,20 @@ class Controller:
                     ],
                     'properties': {
                         '$class': {
-                            'description': 'The fully-qualified class name corresponding to the service to use.',
+                            'description':
+                                'The fully-qualified class name corresponding '
+                                'to the service to use.',
                             'type': 'string'
                         },
                         '$dep-overrides': {
-                            'description': 'Mapping from default dependency name to name to override with.',
+                            'description':
+                                'Mapping from default dependency name to name '
+                                'to override with.',
                             'type': 'object',
                             'additionalProperties': {
-                                'description': 'Name to override default dependency name with.',
+                                'description':
+                                    'Name to override default dependency name '
+                                    'with.',
                                 'type': 'string'
                             },
                             'propertyNames': {
@@ -112,10 +135,14 @@ class Controller:
                             }
                         },
                         '$export-overrides': {
-                            'description': 'Mapping from export default names to name to override with.',
+                            'description':
+                                'Mapping from export default names to name to '
+                                'override with.',
                             'type': 'object',
                             'additionalProperties': {
-                                'description': 'Name to override default export name with.',
+                                'description':
+                                    'Name to override default export name '
+                                    'with.',
                                 'type': 'string'
                             },
                             'propertyNames': {
@@ -124,9 +151,12 @@ class Controller:
                         },
                         '$name': {
                             'description':
-                                'Name of the service. When specified with $class, this name is used to reference the '
-                                'service. Otherwise, an attempt is made to infer the desired service from the name. If '
-                                'no service could be inferred, config validation fails.',
+                                'Name of the service. When specified with '
+                                '$class, this name is used to reference the '
+                                'service. Otherwise, an attempt is made to '
+                                'infer the desired service from the name. If no'
+                                'service could be inferred, config validation '
+                                'fails.',
                             'type': 'string'
                         }
                     }
@@ -140,15 +170,19 @@ class Controller:
     #: Mapping from names of services to the service(s) they are a name for.
     name_to_service: dict[str, Service]
 
-    #: The started services, organized into stages whereby services in a later stage depend only on services in a
-    #: previous stage, and which depend on at least 1 object in the most recent previous stage.
+    #: The started services, organized into stages whereby services in a later
+    #: stage depend only on services in a previous stage, and which depend on at
+    #: least 1 object in the most recent previous stage.
     service_stages: list[set[Service]]
 
-    #: :class:`ServiceSpecs <.ServiceSpec>` to use to create services, organized into stages as above.
+    #: :class:`ServiceSpecs <.ServiceSpec>` to use to create services, organized
+    #: into stages as above.
     spec_stages: list[set[ServiceSpec]]
 
     @staticmethod
-    def _check_export_collisions(collisions: dict[str, set[ServiceSpec]]) -> None:
+    def _check_export_collisions(
+        collisions: dict[str, set[ServiceSpec]]
+    ) -> None:
         # If export name collisions exist, raise an ExportCollisionError.
         if collisions:
             raise ControllerErrors.ExportCollision(collisions=collisions)
@@ -164,14 +198,20 @@ class Controller:
             raise ControllerErrors.NameCollision(collisions=collisions)
 
     @staticmethod
-    def _check_unsatisfied_deps(unsatisfied: dict[ServiceSpec, set[str]]) -> None:
-        # If any service dependencies were unsatisfied, raise an UnsatisfiedDependenciesError.
+    def _check_unsatisfied_deps(
+        unsatisfied: dict[ServiceSpec, set[str]]
+    ) -> None:
+        # If any service dependencies were unsatisfied, raise an
+        # UnsatisfiedDependenciesError.
         if unsatisfied:
-            raise ControllerErrors.UnsatisfiedDependencies(unsatisfied=unsatisfied)
+            raise ControllerErrors.UnsatisfiedDependencies(
+                unsatisfied=unsatisfied
+            )
 
     @staticmethod
     def _export_to_spec(specs: Sequence[ServiceSpec]) -> dict[str, ServiceSpec]:
-        # Create a mapping from exported object names to the service in which they belong.
+        # Create a mapping from exported object names to the service in which
+        # they belong.
 
         # If there are any name collisions, aggregate them here.
         collisions = {}
@@ -180,14 +220,18 @@ class Controller:
             for name in spec.export_names():
                 if name in result:
                     # Export name collision.
-                    collisions.setdefault(name, set()).update({result[name], spec})
+                    collisions.setdefault(
+                        name, set()
+                    ).update({result[name], spec})
                 else:
                     result[name] = spec
         Controller._check_export_collisions(collisions)
         return result
 
     @staticmethod
-    def _init_service_specs(service_configs: Sequence[JSONType]) -> list[ServiceSpec]:
+    def _init_service_specs(
+        service_configs: Sequence[JSONType]
+    ) -> list[ServiceSpec]:
         # Attempt to create a ServiceSpec for each service.
         specs = []
         ControllerErrors.InitSpecs.collect_errors(
@@ -202,7 +246,8 @@ class Controller:
     def _spec_to_deps(
         specs: Sequence[ServiceSpec], export_to_spec: Mapping[str, ServiceSpec]
     ) -> dict[ServiceSpec, set[ServiceSpec]]:
-        # Gives a mapping from Service classes to the Service classes they depend on.
+        # Gives a mapping from Service classes to the Service classes they
+        # depend on.
         result = {}
         unsatisfied = {}  # Keep track of all unsatisfied dependencies.
         for spec in specs:
@@ -219,7 +264,8 @@ class Controller:
 
     @staticmethod
     def _validate(config: JSONType) -> None:
-        # Validate top-level controller config. Service configs will be validated after their classes are imported.
+        # Validate top-level controller config. Service configs will be
+        # validated after their classes are imported.
         try:
             jsonschema.validate(config, Controller.SCHEMA)
         except ValidationError as e:
@@ -247,34 +293,43 @@ class Controller:
         self._check_name_collisions(service_specs)
         export_to_spec = self._export_to_spec(service_specs)
         spec_to_deps = self._spec_to_deps(service_specs, export_to_spec)
-        with ControllerErrors.CircularDependency.wrap(BRFuncErrors.CircularDependency):
-            self.spec_stages = br.dag_stages(spec_to_deps)
+        with ControllerErrors.CircularDependency.wrap(
+            EnoughFuncErrors.CircularDependency
+        ):
+            self.spec_stages = enough.dag_stages(spec_to_deps)
         self.service_stages = []
         self.name_to_service = {}
         
     def job(self, _name: str, /, *args: str) -> None:
-        """Attempts to run the job on the service with the given name with the given arguments.
+        """Attempts to run the job on the service with the given name with the
+        given arguments.
         
         :param _name: Name of the service to run the job with.
         :param args: Arguments to pass to the job.
-        :raise ServiceControlError: If no service with the given name could be found or if the job did not complete
-            successfully.
+        :raise ServiceControlError: If no service with the given name could be
+            found or if the job did not complete successfully.
         """
-        # First positional argument is called '_name' in case a job takes a keyword argument called 'name'.
+        # First positional argument is called '_name' in case a job takes a
+        # keyword argument called 'name'.
         service = self.service(_name)
         try:
             service.job(*args)
         except Exception as e:
-            raise ControllerErrors.JobFailed(args=args, error=e, service=service)
+            raise ControllerErrors.JobFailed(
+                args=args, error=e, service=service
+            )
         
     def purge(self, name: str) -> None:
-        """Attempts to :meth:`purge <.Service.purge>` the service with the given name, resulting in that service's
-        persistent data being deleted.
+        """Attempts to :meth:`purge <.Service.purge>` the service with the given
+        name, resulting in that service's persistent data being deleted.
         
-        :raise ServiceControlError: If the requested service could not be found or if the purge fails.
+        :raise ServiceControlError: If the requested service could not be found
+            or if the purge fails.
         """
         service = self.service(name)
-        with ControllerErrors.PurgeFailed.wrap_error(Exception, service=service):
+        with ControllerErrors.PurgeFailed.wrap_error(
+            Exception, service=service
+        ):
             service.purge()
 
     def service(self, name: str) -> Service:
@@ -290,7 +345,8 @@ class Controller:
         return service
 
     def start(self) -> None:
-        """Attempts to :meth:`initialize <.Service.init>` and then  :meth:`start <.Service.start>` each service.
+        """Attempts to :meth:`initialize <.Service.init>` and then
+        :meth:`start <.Service.start>` each service.
 
         :raise ServiceControlError: If one or more services fails to start.
         """
@@ -313,16 +369,24 @@ class Controller:
                     try:
                         self.stop()
                     except ControllerErrors.ServiceStop as e2:
-                        raise ControllerErrors.ServiceStartStop(error=e1, errors=e2.errors, service=service, spec=spec)
-                    raise ControllerErrors.ServiceStart(error=e1, service=service, spec=spec)
+                        raise ControllerErrors.ServiceStartStop(
+                            error=e1,
+                            errors=e2.errors,
+                            service=service,
+                            spec=spec
+                        )
+                    raise ControllerErrors.ServiceStart(
+                        error=e1, service=service, spec=spec
+                    )
             self.service_stages.append(services)
 
     def stop(self) -> None:
-        """Attempts to :meth:`stop <.Service.stop>` each service, resulting in each service, thus terminating the
-        application.
+        """Attempts to :meth:`stop <.Service.stop>` each service, resulting in
+        calling stop for each service, thus terminating the application.
 
-        :raise: ControllerError: If one or more services fail to be stopped. All services will be tried in the reverse
-            of the service dependency order regardless of errors.
+        :raise: ServiceControlError: If one or more services fail to be stopped.
+            All services will be tried in the reverse of the service dependency
+            order regardless of errors.
         """
         failures = {}
         for stage in reversed(self.service_stages):

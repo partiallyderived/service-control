@@ -20,14 +20,16 @@ class GoogleCredsService(Service):
         'type': 'object',
         'properties': {
             'scopes': {
-                'description': 'List of Google scopes to make credentials from.',
+                'description':
+                    'List of Google scopes to make credentials from.',
                 'type': 'array',
                 'items': {
                     'type': 'str'
                 }
             },
             'user-info': {
-                'description': 'Authorized user info to make google credentials from.',
+                'description':
+                    'Authorized user info to make google credentials from.',
                 'type': 'object'
             }
         },
@@ -62,7 +64,8 @@ class GoogleCredsService(Service):
     def install(self) -> None:
         """Installs this service.
 
-        :raise ValueError: If the key 'user-info' was not specified in the config.
+        :raise ValueError: If the key 'user-info' was not specified in the
+            config.
         """
         if not self._user_info:
             raise ValueError('user-info must be specified for installation.')
@@ -72,7 +75,7 @@ class GoogleCredsService(Service):
     def installed(self) -> bool:
         """Determines whether this service is installed.
 
-        :return: :code:`True` if this is installed, :code:`False` otherwise.
+        :return: ``True`` if this is installed, ``False`` otherwise.
         """
         return self.name in self._data
 
@@ -83,7 +86,9 @@ class GoogleCredsService(Service):
     def start(self) -> None:
         """Starts this service by creating the credentials."""
         user_info = self._data[self.name]['user-info']
-        self.google_creds = Credentials.from_authorized_user_info(self._scopes, user_info)
+        self.google_creds = Credentials.from_authorized_user_info(
+            self._scopes, user_info
+        )
         self.google_creds.refresh(Request())
         self._data[self.name]['user-info'] = self.google_creds.to_json()
         self._data.save()
@@ -115,7 +120,8 @@ class GoogleSheetsService(Service):
     google_sheets: Resource | None
 
     def __init__(self, config: JSONType, google_creds: Credentials) -> None:
-        """Initializes a GoogleSheetsService from the given config and Google credentials.
+        """Initializes a GoogleSheetsService from the given config and Google
+        credentials.
 
         :param config: Config to initialize with.
         :param google_creds: Google credentials to use.

@@ -1,4 +1,4 @@
-import enough as br
+import enough
 
 from keywordcommands import Command, CommandRole, RolesSecurityManager
 from keywordcommands.exceptions import SecurityErrors
@@ -23,30 +23,53 @@ def test_roles_security_manager(
     assert manager.name_to_role == {}
     assert manager.role_to_users == {}
     assert manager.user_to_roles == {}
-    assert manager.user_roles('user1') == set()  # Using previously unspecified users is allowed.
+
+    # Using previously unspecified users is allowed.
+    assert manager.user_roles('user1') == set()  
 
     # Using unspecified roles is not allowed.
-    with br.raises(SecurityErrors.NoSuchRole(name='role1')):
+    with enough.raises(SecurityErrors.NoSuchRole(name='role1')):
         manager.role('role1')
 
     # __init__ where duplicate role names are given for roles.
     role_empty2 = CommandRole('empty')
     role1_2 = CommandRole('role1')
-    with br.raises(SecurityErrors.DuplicateRoles(duplicated={'empty', 'role1'})):
-        RolesSecurityManager(roles=[role_empty, role1, role2, role_empty2, role1_2])
+    with enough.raises(SecurityErrors.DuplicateRoles(
+        duplicated={'empty', 'role1'}
+    )):
+        RolesSecurityManager(
+            roles=[role_empty, role1, role2, role_empty2, role1_2]
+        )
 
     # __init__ where user_to_roles has roles not given for roles.
-    with br.raises(SecurityErrors.UnrecognizedRoles(unrecognized={role1, role2})):
-        RolesSecurityManager(roles=[role_empty], user_to_roles={'user1': {role1}, 'user2': {role2}})
+    with enough.raises(SecurityErrors.UnrecognizedRoles(
+        unrecognized={role1, role2}
+    )):
+        RolesSecurityManager(
+            roles=[role_empty],
+            user_to_roles={'user1': {role1}, 'user2': {role2}}
+        )
 
     # Nontrivial __init__.
     manager = RolesSecurityManager(
         roles=[role1, role2],
-        user_to_roles={'user1': set(), 'user2': {role1}, 'user3': {role2}, 'user4': {role1, role2}}
+        user_to_roles={
+            'user1': set(),
+            'user2': {role1},
+            'user3': {role2},
+            'user4': {role1, role2}
+        }
     )
     assert manager.name_to_role == {'role1': role1, 'role2': role2}
-    assert manager.role_to_users == {role1: {'user2', 'user4'}, role2: {'user3', 'user4'}}
-    assert manager.user_to_roles == {'user1': set(), 'user2': {role1}, 'user3': {role2}, 'user4': {role1, role2}}
+    assert manager.role_to_users == {
+        role1: {'user2', 'user4'}, role2: {'user3', 'user4'}
+    }
+    assert manager.user_to_roles == {
+        'user1': set(),
+        'user2': {role1},
+        'user3': {role2},
+        'user4': {role1, role2}
+    }
 
     # Test RolesSecurityManager.role_users.
     for role, users in manager.role_to_users.items():
@@ -60,7 +83,7 @@ def test_roles_security_manager(
     assert manager.role('role1') == role1
     assert manager.role('rOLE1') == role1
     assert manager.role('role2') == role2
-    with br.raises(SecurityErrors.NoSuchRole(name='empty')):
+    with enough.raises(SecurityErrors.NoSuchRole(name='empty')):
         manager.role('empty')
 
     # Test RolesSecurityManager.may_execute.
@@ -105,7 +128,9 @@ def test_roles_security_manager(
         assert manager.may_assign_role(role, 'user4')
 
     # Test RolesSecurityManager.add_roles.
-    with br.raises(SecurityErrors.CannotAssign(roles={role1, role2}, user='user2')):
+    with enough.raises(
+        SecurityErrors.CannotAssign(roles={role1, role2}, user='user2')
+    ):
         manager.add_roles([role_empty, role1, role2], 'user2', 'user5')
     assert not manager.user_roles('user5')
 
@@ -113,7 +138,9 @@ def test_roles_security_manager(
     assert manager.user_roles('user5') == {role1, role2}
 
     # Test RolesSecurityManager.remove_roles.
-    with br.raises(SecurityErrors.CannotAssign(roles={role1, role2}, user='user2')):
+    with enough.raises(SecurityErrors.CannotAssign(
+        roles={role1, role2}, user='user2')
+    ):
         manager.remove_roles([role_empty, role1, role2], 'user2', 'user5')
     assert manager.user_roles('user5') == {role1, role2}
 

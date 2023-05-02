@@ -1,14 +1,14 @@
 import json
 import os
 
-import enough as br
+import enough
 
 from servicecontrol.tools.data import DataService
 
 
 def test_data() -> None:
     # Run simple tests to make sure DataService functions correctly.
-    with br.temp_file_path() as path:
+    with enough.temp_file_path() as path:
         config = {'path': path}
         service = DataService(config)
         service.data['my_data'] = [1, 'asdf', True]

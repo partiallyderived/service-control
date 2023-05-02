@@ -5,9 +5,10 @@ from abc import ABC
 from collections.abc import Iterable
 from typing import ClassVar
 
-import enough as br
-import jsonschema
+import enough
 from enough import EnumErrors, JSONType
+
+import jsonschema
 from jsonschema import ValidationError
 
 from servicecontrol.core._exception import ServiceControlError
@@ -16,25 +17,36 @@ from servicecontrol.core._exception import ServiceControlError
 class ServiceErrors(EnumErrors[ServiceControlError]):
     """Exception types raised in servicecontrol.core.service."""
     NoConfigArg = (
-        '"config" excepted as first positional argument after "self" to __init__ method of service'
-            '{service.cls_name()}',
+        '"config" excepted as first positional argument after "self" to '
+            '__init__ method of service {service.cls_name()}',
         'service',
         TypeError
     )
-    NoJobsImplemented = 'No jobs have been implemented for {service.cls_name()}', 'service', NotImplementedError
-    SchemaValidation = '{service.cls_name()} failed validation: {_error_tb}', ('service', 'error', 'config')
+    NoJobsImplemented = (
+        'No jobs have been implemented for {service.cls_name()}',
+        'service',
+        NotImplementedError
+    )
+    SchemaValidation = (
+        '{service.cls_name()} failed validation: {_error_tb}',
+        ('service', 'error', 'config')
+    )
 
 
 class Service(ABC):
-    """Class representing a service which is managed by a :class:`.Controller`."""
+    """Class representing a service which is managed by a
+    :class:`.Controller`.
+    """
 
     #: Names of objects exported by this service.
     EXPORTS: ClassVar[Iterable[str]] = frozenset()
 
-    #: When True, this service's exports may be used as dependencies without explicit configuration.
+    #: When True, this service's exports may be used as dependencies without
+    #: explicit configuration.
     IMPLICIT: ClassVar[bool] = False
 
-    #: Name of the service. If unspecified, users must supply a name via the '$name' configuration.
+    #: Name of the service. If unspecified, users must supply a name via the
+    #: '$name' configuration.
     NAME: ClassVar[str | None] = None
 
     #: JSON Schema to validate configuration with.
@@ -45,10 +57,11 @@ class Service(ABC):
 
     @classmethod
     def check_init(cls) -> None:
-        """Verifies that the __init__ method for this class takes "config" as its first positional argument.
+        """Verifies that the __init__ method for this class takes "config" as
+        its first positional argument.
 
-        :raise ServiceControlError: If "config" is not the name of the first positional argument of __init__ for this
-            class.
+        :raise ServiceControlError: If "config" is not the name of the first
+            positional argument of __init__ for this class.
         """
         init_spec = inspect.getfullargspec(cls.__init__)
         if len(init_spec.args) <= 1 or init_spec.args[1] != 'config':
@@ -60,13 +73,14 @@ class Service(ABC):
 
         :return: The service class's fully-qualified name.
         """
-        return br.fqln(cls)
+        return enough.fqln(cls)
 
     @classmethod
     def default_name(cls) -> str | None:
         """Gives the default name for this service, if there is one.
 
-        :return The default name for this service if it exists, :code:`None` otherwise.
+        :return The default name for this service if it exists, ``None``
+            otherwise.
         """
         return cls.NAME
 
@@ -93,13 +107,15 @@ class Service(ABC):
     def implicit(cls) -> bool:
         """Determines whether this is an implicitly usable service.
 
-        :return: :code:`True` if this service is implicitly usable, :code`False` otherwise.
+        :return: ``True`` if this service is implicitly usable, ``False``
+            otherwise.
         """
         return cls.IMPLICIT
 
     @classmethod
     def schema(cls) -> JSONType:
-        """Gives the `JSON Schema <https://json-schema.org/>` to validate configuration with.
+        """Gives the `JSON Schema <https://json-schema.org/>` to validate
+        configuration with.
 
         :return: The JSON Schema to validate with.
         """
@@ -112,7 +128,9 @@ class Service(ABC):
         :param config: Config to validate.
         :raise ServiceControlError: If validation for the config fails.
         """
-        with ServiceErrors.SchemaValidation.wrap_error(ValidationError, config=config, service=cls):
+        with ServiceErrors.SchemaValidation.wrap_error(
+            ValidationError, config=config, service=cls
+        ):
             jsonschema.validate(config, cls.schema())
 
     # noinspection PyUnusedLocal
@@ -131,15 +149,17 @@ class Service(ABC):
         return {n: getattr(self, n) for n in self.EXPORTS}
 
     def install(self) -> None:
-        """Performs environment-related (such as creating files and folders) tasks to be run once in the lifetime of the
-        service in which this service is used, unless a re-install of the service is requested.
+        """Performs environment-related (such as creating files and folders)
+        tasks to be run once in the lifetime of the service in which this
+        service is used, unless a re-install of the service is requested.
         """
 
     def installed(self) -> bool:
-        """Determines whether this service is :meth:`installed <.Service.install>`.
-        Must be overridden by service which need installation (always returns :code:`True` unless overridden).
+        """Determines whether this service is
+        :meth:`installed <.Service.install>`. Must be overridden by services
+        which need installation (always returns ``True`` unless overridden).
 
-        :return: :code:`True` if this service is installed, :code:`False` otherwise.
+        :return: ``True`` if this service is installed, ``False`` otherwise.
         """
         return True
 
@@ -147,7 +167,8 @@ class Service(ABC):
         """Performs a job with the given arguments on this service.
 
         :param args: The positional arguments to the job.
-        :raise ServiceControlError: If no jobs have been implemented for this service.
+        :raise ServiceControlError: If no jobs have been implemented for this
+            service.
         """
         raise ServiceErrors.NoJobsImplemented(service=self)
 

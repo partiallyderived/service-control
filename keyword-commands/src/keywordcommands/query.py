@@ -1,7 +1,7 @@
 from collections.abc import Mapping, Sequence
 from enum import Enum, auto
 
-import enough as br
+import enough
 from enough import T
 
 from keywordcommands._exceptions import CommandError, KeywordCommandsError
@@ -10,8 +10,8 @@ from keywordcommands.group import CommandGroup
 
 
 class QueryResult(Enum):
-    """Enumeration of possible non-error results of the query. Error results are enumerated in
-    :class:`.ProcessErrorContext`.
+    """Enumeration of possible non-error results of the query. Error results are
+    enumerated in :class:`.ProcessErrorContext`.
     """
     SUCCESS = auto()
     GENERAL_HELP = auto()
@@ -26,7 +26,7 @@ class QueryInfo:
     #: The resulting exception, if applicable.
     error: CommandError | None = None
 
-    #: :code:`True` if the query is a help query, :code:`False` otherwise.
+    #: ``True`` if the query is a help query, ``False`` otherwise.
     is_help: bool | None = None
 
     #: The unparsed keyword arguments entered by the user, if applicable.
@@ -35,7 +35,8 @@ class QueryInfo:
     #: Name of the top-level application.
     name: str
 
-    #: :class:`.Command` or :class`.CommandGroup` the user entered, if applicable.
+    #: :class:`.Command` or :class`.CommandGroup` the user entered, if
+    #: applicable.
     node: Command | CommandGroup | None = None
 
     #: The parsed keyword arguments entered by the user, if applicable.
@@ -56,7 +57,7 @@ class QueryInfo:
     @staticmethod
     def _checked_get(name: str, value: object, typ: type[T]) -> T:
         if not isinstance(value, typ):
-            raise TypeError(f'{name} is not an instance of {br.fqln(typ)}')
+            raise TypeError(f'{name} is not an instance of {enough.fqln(typ)}')
         return value
 
     def __init__(self, name: str, root: CommandGroup) -> None:

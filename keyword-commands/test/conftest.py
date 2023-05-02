@@ -4,7 +4,14 @@ from unittest.mock import Mock
 import pytest
 
 from keywordcommands import (
-    Arg, Command, CommandGroup, CommandRole, CommandState, Example, RolesSecurityManager, UserState
+    Arg,
+    Command,
+    CommandGroup,
+    CommandRole,
+    CommandState,
+    Example,
+    RolesSecurityManager,
+    UserState
 )
 
 
@@ -127,17 +134,28 @@ def role_empty() -> CommandRole:
 
 @pytest.fixture
 def role1(cmd1: Command, cmd2: Command, role_empty: CommandRole) -> CommandRole:
-    return CommandRole('role1', cmds=[cmd1, cmd2], assignable_roles=[role_empty])
+    return CommandRole(
+        'role1', cmds=[cmd1, cmd2], assignable_roles=[role_empty]
+    )
 
 
 @pytest.fixture
-def role2(cmd3: Command, cmd4: Command, role_empty: CommandRole, role1: CommandRole) -> CommandRole:
-    return CommandRole('role2', cmds=[cmd3, cmd4], assignable_roles=[role_empty, role1], may_assign_self=True)
+def role2(
+    cmd3: Command, cmd4: Command, role_empty: CommandRole, role1: CommandRole
+) -> CommandRole:
+    return CommandRole(
+        'role2',
+        cmds=[cmd3, cmd4],
+        assignable_roles=[role_empty, role1],
+        may_assign_self=True
+    )
 
 
 # RolesSecurityManager to use for testing.
 @pytest.fixture
-def security_manager(role_empty: CommandRole, role1: CommandRole, role2: CommandRole) -> RolesSecurityManager:
+def security_manager(
+    role_empty: CommandRole, role1: CommandRole, role2: CommandRole
+) -> RolesSecurityManager:
     return RolesSecurityManager(
         roles=[role_empty, role1, role2],
         user_to_roles={

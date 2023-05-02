@@ -1,17 +1,19 @@
 from typing import Final
 
-import pytest
-import enough as br
+import enough
 from enough import JSONType
+
 from jsonschema import ValidationError
+
+import pytest
 
 from servicecontrol.core import Service
 from servicecontrol.core.exceptions import ServiceErrors
 
 
 def test_check_init() -> None:
-    # Test that a service whose first positional argument to __init__ is not named "config" results in a
-    # NoConfigArgError being raised.
+    # Test that a service whose first positional argument to __init__ is not
+    # named "config" results in a NoConfigArgError being raised.
 
     class DefaultService(Service):
         # No override should be allowed.
@@ -44,18 +46,23 @@ def test_check_init() -> None:
     ValidService1.check_init()
     ValidService2.check_init()
 
-    with br.raises(ServiceErrors.NoConfigArg(service=NoConfigService)):
+    with enough.raises(ServiceErrors.NoConfigArg(service=NoConfigService)):
         NoConfigService.check_init()
 
-    with br.raises(ServiceErrors.NoConfigArg(service=ConfigAsSecondArgumentService)):
+    with enough.raises(ServiceErrors.NoConfigArg(
+        service=ConfigAsSecondArgumentService
+    )):
         ConfigAsSecondArgumentService.check_init()
 
-    with br.raises(ServiceErrors.NoConfigArg(service=ConfigAsKeywordService)):
+    with enough.raises(ServiceErrors.NoConfigArg(
+        service=ConfigAsKeywordService
+    )):
         ConfigAsKeywordService.check_init()
 
 
 def test_default_name() -> None:
-    # Test that the service default name is correctly inferred from NAME class variable.
+    # Test that the service default name is correctly inferred from NAME class
+    # variable.
     class NoNameService(Service):
         NAME: None = None
 
@@ -82,7 +89,9 @@ def test_dep_names() -> None:
 
     class MixedDeps(Service):
         # noinspection PyUnusedLocal
-        def __init__(self, config: JSONType, dep1: str, *, dep2: str, dep3: str) -> None:
+        def __init__(
+            self, config: JSONType, dep1: str, *, dep2: str, dep3: str
+        ) -> None:
             super().__init__(config)
 
     assert NoDeps.dep_names() == set()
@@ -106,7 +115,8 @@ def test_export_names() -> None:
 def test_installed_true_by_default() -> None:
     class SomeService(Service): pass
 
-    # is True just to assert that it's actually True and not some other truthy value.
+    # is True just to assert that it's actually True and not some other truthy
+    # value.
     assert SomeService({}).installed() is True
 
 
@@ -115,12 +125,13 @@ def test_job_exception_by_default() -> None:
     class SomeService(Service): pass
 
     service = SomeService({})
-    with br.raises(ServiceErrors.NoJobsImplemented(service=service)):
+    with enough.raises(ServiceErrors.NoJobsImplemented(service=service)):
         service.job()
 
 
 def test_schema() -> None:
-    # Test that a service's schema is correctly inferred from the SCHEMA class variable.
+    # Test that a service's schema is correctly inferred from the SCHEMA class
+    # variable.
 
     class NoSchemaService(Service): pass
 
@@ -138,7 +149,8 @@ def test_schema() -> None:
 
 
 def test_validate() -> None:
-    # Test that config validation raises a ServiceValidationError for an invalid config.
+    # Test that config validation raises a ServiceValidationError for an invalid
+    # config.
     class SchemaService(Service):
         SCHEMA: Final[JSONType] = {
             'type': 'object',

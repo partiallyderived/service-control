@@ -12,14 +12,18 @@ from servicecontrol.core import Service
 
 
 class DataDict(UserDict):
-    """Thin wrapper around :code:`dict` which provides :meth:`.DataDict.save`, a method which saves its state to disk.
+    """Thin wrapper around ``dict`` which provides :meth:`.DataDict.save`, a
+    method which saves its state to disk.
     """
-    def __init__(self, parent: DataService, *args: object, **kwargs: object) -> None:
-        """Initializes this with the given parent service and any arguments to pass to :code:`dict`.
+    def __init__(
+        self, parent: DataService, *args: object, **kwargs: object
+    ) -> None:
+        """Initializes this with the given parent service and any arguments to
+        pass to ``dict``.
 
         :param parent: Parent service.
-        :param args: Positional arguments to pass to :code:`dict`.
-        :param kwargs: Keyword arguments to pass to :code:`dict`.
+        :param args: Positional arguments to pass to ``dict``.
+        :param kwargs: Keyword arguments to pass to ``dict``.
         """
         super().__init__(*args, **kwargs)
         self._parent = parent
@@ -30,7 +34,9 @@ class DataDict(UserDict):
 
 
 class DataService(Service):
-    """Maintains dynamic data for other services which are persistent across launches."""
+    """Maintains dynamic data for other services which are persistent across
+    launches.
+    """
 
     EXPORTS: Final[frozenset[str]] = frozenset({'data'})
     NAME: Final[str] = 'data'
@@ -77,7 +83,9 @@ class DataService(Service):
                 json.dump(self.data.data, f)
 
     def start(self) -> None:
-        """Starts this service by loading the existing JSON data, if it exists."""
+        """Starts this service by loading the existing JSON data, if it
+        exists.
+        """
         if os.path.isfile(self.path):
             with open(self.path) as f:
                 self.data = DataDict(self, json.load(f))

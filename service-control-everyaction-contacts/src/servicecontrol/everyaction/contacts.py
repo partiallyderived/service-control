@@ -3,7 +3,7 @@ from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
 from typing import ClassVar, Final, TypeAlias, TypeVar
 
-import enough as br
+import enough
 import pymongo
 from enough import JSONType
 from everyaction.objects import ActivistCode, Person
@@ -13,8 +13,8 @@ from pymongo.collection import Collection
 from servicecontrol.core import Service
 from servicecontrol.everyaction.cache import IDNameListCache
 
-# Type of a 'field extractor', consisting of the name of the field in the MongoDB document and a function to parse
-# it with.
+# Type of a 'field extractor', consisting of the name of the field in the
+# MongoDB document and a function to parse it with.
 _FieldExtractor: TypeAlias = tuple[str, Callable[[str], JSONType]]
 
 # Type of sequence of column indexes tupled with activist code IDs.
@@ -64,15 +64,17 @@ class ContactUpdate:
 
     @staticmethod
     def from_person(person: Person) -> 'ContactUpdate':
-        """Creates a ContactUpdate from a Person, using the non-None Person attributes to set corresponding fields in
-        the MongoDB document.
+        """Creates a ContactUpdate from a Person, using the non-None Person
+        attributes to set corresponding fields in the MongoDB document.
 
         :param person: Person to create update with.
         :return: The resulting ContactUpdate.
         """
         van = person.id
         if van is None:
-            raise ValueError('VAN ID required to create ContactUpdate from Person.')
+            raise ValueError(
+                'VAN ID required to create ContactUpdate from Person.'
+            )
         return ContactUpdate(
             van,
             first=person.first,
@@ -112,33 +114,40 @@ class ContactUpdate:
         if fields_to_unset:
             update['$unset'] = {k: "" for k in fields_to_unset}
         if elements_to_add:
-            update['$addToSet'] = {k: {'$each': v} for k, v in elements_to_add.items()}
+            update['$addToSet'] = {
+                k: {'$each': v} for k, v in elements_to_add.items()
+            }
         if elements_to_remove:
             update['$pullAll'] = elements_to_remove
         return update
 
 
 class EAContactsService(Service):
-    """Service which creates a local database of EveryAction contacts using MongoDB."""
+    """Service which creates a local database of EveryAction contacts using
+    MongoDB.
+    """
 
     # Unconstrained type variable.
     _T = TypeVar('_T')
 
     @staticmethod
     def _extract_suppression(value: str) -> bool:
-        # Load a suppression like 'Do not call', which is labeled as either 0 or 1.
+        # Load a suppression like 'Do not call', which is labeled as either 0 or
+        # 1.
         return bool(int(value))
 
     @staticmethod
     def _wrap_in_list(value: str) -> list[str] | None:
-        # Wrap a string in a list unless it is the empty string, in which case 'None' is returned.
+        # Wrap a string in a list unless it is the empty string, in which case
+        # 'None' is returned.
         return [value] if value else None
 
-    # Mapping from export header name to its corresponding extractor. _identity is used as the parser when the raw
-    # value for the field should be used.
+    # Mapping from export header name to its corresponding extractor. _identity
+    # is used as the parser when the raw value for the field should be used.
     _HEADER_TO_EXTRACTOR: ClassVar[dict[str, _FieldExtractor] | None] = None
 
-    #: The default name to give to the MongoDB collection of EveryAction contacts.
+    #: The default name to give to the MongoDB collection of EveryAction
+    # contacts.
     DEFAULT_COLLECTION_NAME: Final[str] = 'contacts'
 
     #: The default name to give to the MongoDB database of EveryAction contacts.
@@ -151,11 +160,15 @@ class EAContactsService(Service):
         'type': 'object',
         'properties': {
             'coll-name': {
-                'description': f"Name to use for the database's collection ({DEFAULT_COLLECTION_NAME} by default).",
+                'description':
+                    f"Name to use for the database's collection "
+                    f"({DEFAULT_COLLECTION_NAME} by default).",
                 'type': 'string'
             },
             'db-name': {
-                'description': f'Name to use for the database ({DEFAULT_DATABASE_NAME} by default).',
+                'description':
+                    f'Name to use for the database ({DEFAULT_DATABASE_NAME} '
+                    f'by default).',
                 'type': 'string'
             }
         },
@@ -179,8 +192,9 @@ class EAContactsService(Service):
 
     @staticmethod
     def _code_name(header: str) -> str:
-        # Determine when the name of an activist code in a header ends by stripping the trailing parenthesized
-        # committee. This parenthetical is preceded by an underscore, so that needs to be stripped too.
+        # Determine when the name of an activist code in a header ends by
+        # stripping the trailing parenthesized committee. This parenthetical is
+        # preceded by an underscore, so that needs to be stripped too.
         name_end = header.rfind('(') - 1
         return header[:name_end]
 
@@ -214,7 +228,8 @@ class EAContactsService(Service):
         codes = []
         splits = line.split('\t')
 
-        # Iterate over extractors to parse values which are not related to activist codes.
+        # Iterate over extractors to parse values which are not related to
+        # activist codes.
         for col, extractor in cols_and_extractors:
             field_name, parser = extractor
             raw = splits[col]
@@ -226,7 +241,9 @@ class EAContactsService(Service):
 
         # Iterate over activist codes.
         for col, code_id in cols_and_code_ids:
-            if splits[col] == 'x':  # A lowercase "x" in an activist code column means that code is applied.
+            # A lowercase "x" in an activist code column means that code is
+            # applied.
+            if splits[col] == 'x':
                 codes.append(code_id)
 
         # Add codes even if it is empty.
@@ -241,7 +258,10 @@ class EAContactsService(Service):
         # Initialize the MongoDB indexes.
         self.collection.create_indexes([
             IndexModel([('van', pymongo.ASCENDING)], unique=True),
-            IndexModel([('first', pymongo.ASCENDING), ('last', pymongo.ASCENDING)], sparse=True),
+            IndexModel(
+                [('first', pymongo.ASCENDING), ('last', pymongo.ASCENDING)],
+                sparse=True
+            ),
             IndexModel([('last', pymongo.ASCENDING)], sparse=True),
             IndexModel([('emails', pymongo.ASCENDING)]),
             IndexModel([('phones', pymongo.ASCENDING)]),
@@ -254,16 +274,23 @@ class EAContactsService(Service):
         with open(path) as f:
             # Don't strip tabs, they separate fields.
             header = f.readline().strip(' \n')
-            cols_and_extractors, cols_and_code_ids = self._process_header(header)
+            cols_and_extractors, cols_and_code_ids = self._process_header(
+                header
+            )
 
             for line in f:
                 line = line.strip(' \n')
                 if line:
-                    docs.append(self._line_to_doc(line, cols_and_extractors, cols_and_code_ids))
+                    docs.append(self._line_to_doc(
+                        line, cols_and_extractors, cols_and_code_ids
+                    ))
         self.collection.insert_many(docs)
 
-    def _process_header(self, header_line: str) -> tuple[_ColsAndExtractors, _ColsAndCodeIDs]:
-        # Process a header to create _ColsAndExtractors and _ColsAndCodeIDs objects needs by _line_to_doc.
+    def _process_header(
+        self, header_line: str
+    ) -> tuple[_ColsAndExtractors, _ColsAndCodeIDs]:
+        # Process a header to create _ColsAndExtractors and _ColsAndCodeIDs
+        # objects needs by _line_to_doc.
         if not self._activist_codes_cache.resources:
             self._activist_codes_cache.refresh()
         activist_codes = self._activist_codes_cache.resources.values()
@@ -280,13 +307,15 @@ class EAContactsService(Service):
                 code_name = self._code_name(header)
                 code = name_to_code.get(code_name)
                 if not code:
-                    # Detect all unrecognized codes before printing an error message.
+                    # Detect all unrecognized codes before printing an error
+                    # message.
                     missing_code_names.append(code_name)
                 else:
                     cols_and_code_ids.append((i, code.id))
         if missing_code_names:
             raise ValueError(
-                f'Could not find the following activist codes in EveryAction: {", ".join(missing_code_names)}'
+                f'Could not find the following activist codes in EveryAction: '
+                f'{", ".join(missing_code_names)}'
             )
         return cols_and_extractors, cols_and_code_ids
 
@@ -299,7 +328,8 @@ class EAContactsService(Service):
         """Initializes this service with the given config and dependencies.
 
         :param config: Config to initialize with.
-        :param activist_codes_cache: Cache of activist codes to use to load them from a contact export file.
+        :param activist_codes_cache: Cache of activist codes to use to load them
+            from a contact export file.
         :param mongo: MongoDB client to initialize with.
         """
         super().__init__(config)
@@ -326,7 +356,8 @@ class EAContactsService(Service):
         phone: str | None = None,
         codes: Sequence[int] | None = None
     ) -> list[JSONType]:
-        """Finds all contacts with information matching all of the given filters.
+        """Finds all contacts with information matching all of the given
+        filters.
 
         :param first: First name to filter contacts with.
         :param last: Last name to filter contacts with.
@@ -336,9 +367,13 @@ class EAContactsService(Service):
         :return: The resulting contacts.
         :raise ValueError: If no arguments are given.
         """
-        query = self._find_query(first=first, last=last, email=email, phone=phone, codes=codes)
+        query = self._find_query(
+            first=first, last=last, email=email, phone=phone, codes=codes
+        )
         if not query:
-            raise ValueError('At least one argument must be specified for find.')
+            raise ValueError(
+                'At least one argument must be specified for find.'
+            )
         cursor = self.collection.find(query, projection={'_id': False})
         return list(cursor)
 
@@ -346,33 +381,41 @@ class EAContactsService(Service):
         """Gets a contact using their VAN ID.
 
         :param van: VAN ID of contact to get.
-        :return: The found contact, or :code:`None` if no contact could be found.
+        :return: The found contact, or ``None`` if no contact could be found.
         """
         return self.collection.find_one({'van': van}, projection={'_id': False})
 
     def install(self) -> None:
-        """Installs this service's persistent data by creating the necessary MongoDB indices."""
+        """Installs this service's persistent data by creating the necessary
+        MongoDB indices.
+        """
         self._init_indexes()
 
     def installed(self) -> bool:
         """Determines whether this service is installed.
 
-        :return: :code:`True` if this service is installed, :code:`False` otherwise.
+        :return: ``True`` if this service is installed, ``False`` otherwise.
         """
         return len(self.collection.index_information()) > 1
 
     def job(self, *args: str) -> None:
-        """Runs a job on this service. Currently only supports loading exported contact data with two arguments:
-        load <file name>.
+        """Runs a job on this service. Currently only supports loading exported
+        contact data with two arguments: load <file name>.
 
-        :param args: The arguments to run the job with (load and then the file name).
+        :param args: The arguments to run the job with
+            (load and then the file name).
         """
         num_args = len(args)
         if num_args != 2:
-            raise ValueError(f'Expected exactly two arguments, found {num_args}: {shlex.join(args)}')
+            raise ValueError(
+                f'Expected exactly two arguments, found {num_args}: '
+                f'{shlex.join(args)}'
+            )
         command, path = args
         if command != 'load':
-            raise ValueError(f'Only "load" command is supported, found "{command}"')
+            raise ValueError(
+                f'Only "load" command is supported, found "{command}"'
+            )
         self._load_contacts(path)
 
     def purge(self) -> None:
@@ -380,7 +423,8 @@ class EAContactsService(Service):
         self._mongo.drop_database(self._db_name)
 
     def update(self, data: ContactUpdate) -> JSONType:
-        """Updates a contact with the given data or creates a new contact if it did not already exist.
+        """Updates a contact with the given data or creates a new contact if it
+        did not already exist.
 
         :param data: Data to update with.
         :return: The updated contact.
@@ -398,14 +442,16 @@ class EAContactsService(Service):
 
         :param data: The updates to apply.
         """
-        requests = [UpdateOne({'van': d.van}, d._update(), upsert=True) for d in data]
+        requests = [
+            UpdateOne({'van': d.van}, d._update(), upsert=True) for d in data
+        ]
         self.collection.bulk_write(requests, ordered=False)
 
 
 EAContactsService._HEADER_TO_EXTRACTOR = {
     'VANID': ('van', int),
-    'First': ('first', br.identity),
-    'Last': ('last', br.identity),
+    'First': ('first', enough.identity),
+    'Last': ('last', enough.identity),
     'NoCall': ('do_not_call', EAContactsService._extract_suppression),
     'NoEmail': ('do_not_email', EAContactsService._extract_suppression),
     'Preferred Email': ('emails', EAContactsService._wrap_in_list),

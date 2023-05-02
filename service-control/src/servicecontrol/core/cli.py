@@ -27,27 +27,36 @@ class CLIErrors(EnumErrors[ServiceControlError]):
         'errors'
     )
     PurgeNoSuchService = (
-        'Aborting because no services are configured with these names: {", ".join(not_found)}',
+        'Aborting because no services are configured with these names: '
+            '{", ".join(not_found)}',
         'not_found'
     )
 
 
 A = TypeVar('A', bound=Action)
 
-parser: Final[ArgumentParser] = ArgumentParser(description='Perform an action with a service controller.')
+parser: Final[ArgumentParser] = ArgumentParser(
+    description='Perform an action with a service controller.'
+)
 subparsers: Final[A] = parser.add_subparsers(dest='command')
 
 start_parser: Final[A] = subparsers.add_parser('start')
 start_parser.add_argument('config', help='Configuration to start with.')
 
 job_parser: Final[A] = subparsers.add_parser('job')
-job_parser.add_argument('config', help='Configuration to use to launch services to run job on.')
+job_parser.add_argument(
+    'config', help='Configuration to use to launch services to run job on.'
+)
 job_parser.add_argument('service', help='Name of service to run job with.')
 job_parser.add_argument('args', nargs='*', help='Arguments to pass to the job.')
 
 purge_parser: Final[A] = subparsers.add_parser('purge')
-purge_parser.add_argument('config', help='Configuration to purge services with.')
-purge_parser.add_argument('services', nargs='+', help='Names of services to purge.')
+purge_parser.add_argument(
+    'config', help='Configuration to purge services with.'
+)
+purge_parser.add_argument(
+    'services', nargs='+', help='Names of services to purge.'
+)
 
 
 def _controller(parsed: Namespace) -> Controller:
@@ -57,16 +66,19 @@ def _controller(parsed: Namespace) -> Controller:
 
 
 def _service_names(controller: Controller) -> set[str]:
-    # Helper function to get all services names from a controller that hasn't started yet.
+    # Helper function to get all services names from a controller that hasn't
+    # started yet.
     return {spec.name for stage in controller.spec_stages for spec in stage}
 
 
 def job(parsed: Namespace) -> None:
-    """Handles running jobs with the controller using the parsed command line arguments.
+    """Handles running jobs with the controller using the parsed command line
+    arguments.
 
     :param parsed: Parsed command line arguments.
-    :raise ServiceControlError: If an error occurred when trying to initialize the controller or if the service for
-        which the job was requested to be run on could not be found.
+    :raise ServiceControlError: If an error occurred when trying to initialize
+        the controller or if the service for which the job was requested to be
+        run on could not be found.
     """
     controller = _controller(parsed)
     service = parsed.service
@@ -79,7 +91,8 @@ def job(parsed: Namespace) -> None:
 
 
 def purge(parsed: Namespace) -> None:
-    """Handle purging services with the controller using the parsed command line arguments.
+    """Handle purging services with the controller using the parsed command line
+    arguments.
 
     :param parsed: The parsed command line arguments.
     :raise ServiceControlError: If any of the following are true:
@@ -104,7 +117,10 @@ def purge(parsed: Namespace) -> None:
         except Exception as e:
             failures[controller.name_to_service[service]] = e
     if successes:
-        print(f'Successfully purged the following services: {", ".join(successes)}')
+        print(
+            f'Successfully purged the following services: '
+            f'{", ".join(successes)}'
+        )
     else:
         print('No services successfully purged.', file=sys.stderr)
     if failures:
@@ -115,7 +131,8 @@ def start(parsed: Namespace) -> None:
     """Handles starting the controller using the parsed command line arguments.
 
     :param parsed: The parsed command line arguments.
-    :raise ServiceControlError: If there is an error when trying to initializing the controller.
+    :raise ServiceControlError: If there is an error when trying to initializing
+        the controller.
     """
     controller = _controller(parsed)
 
@@ -137,13 +154,15 @@ def start(parsed: Namespace) -> None:
 
 
 def main(args: Sequence[str]) -> None:
-    """Handles command lines arguments and performs actions with a service controller accordingly.
+    """Handles command lines arguments and performs actions with a service
+    controller accordingly.
 
     :param args: Command line arguments.
     :raise ServiceControlError: If any of the following are true:
         * The given config file could not be found or is not a file.
         * The arguments fail to be parsed
-        * An error occurs in the course of trying to complete the requested task.
+        * An error occurs in the course of trying to complete the requested
+          task.
     """
     try:
         parsed = parser.parse_args(args)

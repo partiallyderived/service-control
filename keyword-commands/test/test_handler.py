@@ -1,7 +1,7 @@
 import unittest.mock as mock
 from unittest.mock import Mock
 
-import enough as br
+import enough
 
 from keywordcommands import (
     Arg,
@@ -16,47 +16,80 @@ from keywordcommands import (
     QueryResult,
     SecurityManager
 )
-from keywordcommands.exceptions import CommandErrors, ExecutionError, ParseError, SecurityError
+from keywordcommands.exceptions import (
+    CommandErrors, ExecutionError, ParseError, SecurityError
+)
 
 
 def test_parse() -> None:
-    # Test that CommandHandler.parse correctly parses the path and keyword arguments for the given string.
+    # Test that CommandHandler.parse correctly parses the path and keyword
+    # arguments for the given string.
     assert CommandHandler.parse('') == ([], {}, set())
-    assert CommandHandler.parse('edge1 edge2 edge3') == (['edge1', 'edge2', 'edge3'], {}, set())
-    assert CommandHandler.parse('help edge1 edge2 edge3') == (['help', 'edge1', 'edge2', 'edge3'], {}, set())
-    assert CommandHandler.parse('arg1=val1 arg2=val2 arg3=val3') == (
-        [], {'arg1': 'val1', 'arg2': 'val2', 'arg3': 'val3'}, set()
-    )
-    assert CommandHandler.parse('edge1 edge2 edge3 arg1=val1 arg2=val2 arg3=val3') == (
-        ['edge1', 'edge2', 'edge3'], {'arg1': 'val1', 'arg2': 'val2', 'arg3': 'val3'}, set()
+    assert CommandHandler.parse(
+        'edge1 edge2 edge3'
+    ) == (['edge1', 'edge2', 'edge3'], {}, set())
+    assert CommandHandler.parse(
+        'help edge1 edge2 edge3'
+    ) == (['help', 'edge1', 'edge2', 'edge3'], {}, set())
+    assert CommandHandler.parse(
+        'arg1=val1 arg2=val2 arg3=val3'
+    ) == ([], {'arg1': 'val1', 'arg2': 'val2', 'arg3': 'val3'}, set())
+    assert CommandHandler.parse(
+        'edge1 edge2 edge3 arg1=val1 arg2=val2 arg3=val3'
+    ) == (
+        ['edge1', 'edge2', 'edge3'],
+        {'arg1': 'val1', 'arg2': 'val2', 'arg3': 'val3'},
+        set()
     )
 
     # Try spacing things out, should get same result.
-    assert CommandHandler.parse('edge1  edge2      edge3      arg1=val1  arg2=val2       arg3=val3') == (
-        ['edge1', 'edge2', 'edge3'], {'arg1': 'val1', 'arg2': 'val2', 'arg3': 'val3'}, set()
+    assert CommandHandler.parse(
+        'edge1  edge2      edge3      arg1=val1  arg2=val2       arg3=val3'
+    ) == (
+        ['edge1', 'edge2', 'edge3'],
+        {'arg1': 'val1', 'arg2': 'val2', 'arg3': 'val3'},
+        set()
     )
 
     # Edges and argument keys are case insensitive.
-    assert CommandHandler.parse('edge1 EDGE2 edge3 arg1=val1 ARG2=VAL2 arg3=val3') == (
-        ['edge1', 'edge2', 'edge3'], {'arg1': 'val1', 'arg2': 'VAL2', 'arg3': 'val3'}, set()
+    assert CommandHandler.parse(
+        'edge1 EDGE2 edge3 arg1=val1 ARG2=VAL2 arg3=val3'
+    ) == (
+        ['edge1', 'edge2', 'edge3'],
+        {'arg1': 'val1', 'arg2': 'VAL2', 'arg3': 'val3'},
+        set()
     )
 
     # Duplicates are given in third return value.
-    assert CommandHandler.parse('edge1 edge2 edge3 arg1=val1 ARG1=VAL1 arg2=val2 arg2=VAL2 arg3=val3') == (
-        ['edge1', 'edge2', 'edge3'], {'arg1': 'VAL1', 'arg2': 'VAL2', 'arg3': 'val3'}, {'arg1', 'arg2'}
+    assert CommandHandler.parse(
+        'edge1 edge2 edge3 arg1=val1 ARG1=VAL1 arg2=val2 arg2=VAL2 arg3=val3'
+    ) == (
+        ['edge1', 'edge2', 'edge3'],
+        {'arg1': 'VAL1', 'arg2': 'VAL2', 'arg3': 'val3'},
+        {'arg1', 'arg2'}
     )
 
-    _, kwargs, _ = CommandHandler.parse(r'edge1 edge2 edge3 arg1=hi\=everybody arg2=val2')
+    _, kwargs, _ = CommandHandler.parse(
+        r'edge1 edge2 edge3 arg1=hi\=everybody arg2=val2'
+    )
     print(kwargs['arg1'].count('\\'))
 
     # Try escaping equals sign.
-    assert CommandHandler.parse(r'edge1 edge2 edge3 arg1=hi\=everybody arg2=val2') == (
-        ['edge1', 'edge2', 'edge3'], {'arg1': r'hi=everybody', 'arg2': 'val2'}, set()
+    assert CommandHandler.parse(
+        r'edge1 edge2 edge3 arg1=hi\=everybody arg2=val2'
+    ) == (
+        ['edge1', 'edge2', 'edge3'],
+        {'arg1': r'hi=everybody', 'arg2': 'val2'},
+        set()
     )
 
     # More complicated escape.
-    assert CommandHandler.parse(r'edge1 edge2 edge3 arg1=hello\\\\\=Dr. Nick arg2=val2') == (
-        ['edge1', 'edge2', 'edge3'], {'arg1': r'hello\\\\=Dr. Nick', 'arg2': 'val2'}, set()
+    assert CommandHandler.parse(
+        r'edge1 edge2 edge3 arg1=hello\\\\\=Dr. Nick arg2=val2'
+    ) == (
+        ['edge1', 'edge2', 'edge3'],
+        {'arg1': r'hello\\\\=Dr. Nick', 'arg2': 'val2'},
+        set()
     )
 
     # Edge case: empty value for an argument.
@@ -224,7 +257,9 @@ def test_handle() -> None:
 
     # Case 9: Duplicate args.
     handler.handle(state, 'edge3 edge1 arg1=val1 ARG1=VAL1 arg2=val2')
-    assert state.query.error == CommandErrors.DuplicateArgs(duplicated={'arg1'}, query=state.query)
+    assert state.query.error == CommandErrors.DuplicateArgs(
+        duplicated={'arg1'}, query=state.query
+    )
     assert state.query.result == CommandErrors.DuplicateArgs
     assert state.query.path == ['edge3', 'edge1']
     assert state.query.kwargs == {'arg1': 'VAL1', 'arg2': 'val2'}
@@ -233,14 +268,18 @@ def test_handle() -> None:
 
     # Case 10: Missing required args.
     handler.handle(state, 'edge3 edge1 arg2=val2')
-    assert state.query.error == CommandErrors.MissingRequiredArgs(missing={'arg1'}, query=state.query)
+    assert state.query.error == CommandErrors.MissingRequiredArgs(
+        missing={'arg1'}, query=state.query
+    )
     assert state.query.result is CommandErrors.MissingRequiredArgs
 
     assert_only_called(mock_methods.handle_error)
 
     # Case 11: Unrecognized args.
     handler.handle(state, 'edge3 edge1 arg1=val1 arg2=val2 arg3=val3')
-    assert state.query.error == CommandErrors.UnrecognizedArgs(unrecognized={'arg3'}, query=state.query)
+    assert state.query.error == CommandErrors.UnrecognizedArgs(
+        unrecognized={'arg3'}, query=state.query
+    )
     assert state.query.result == CommandErrors.UnrecognizedArgs
     assert_only_called(mock_methods.handle_error)
 
@@ -254,13 +293,17 @@ def test_handle() -> None:
 
     # Case 13: Execution exception.
     handler.handle(state, 'edge3 edge1 arg1=cmd-fail arg2=val2')
-    assert state.query.error == CommandErrors.ExecutionError(error=exe_error, query=state.query)
+    assert state.query.error == CommandErrors.ExecutionError(
+        error=exe_error, query=state.query
+    )
     assert state.query.result == CommandErrors.ExecutionError
     assert_only_called(mock_methods.handle_error, mock_methods.pre_execute)
 
     # Case 14: Unexpected exception.
     handler.handle(state, 'edge3 edge1 arg1=unexpected arg2=val2')
-    assert state.query.error == CommandErrors.UnexpectedError(error=unexpected_error, query=state.query)
+    assert state.query.error == CommandErrors.UnexpectedError(
+        error=unexpected_error, query=state.query
+    )
     assert state.query.result == CommandErrors.UnexpectedError
     assert_only_called(mock_methods.handle_error, mock_methods.pre_execute)
 
@@ -281,7 +324,11 @@ def test_default_handler(mock_messenger: Mock) -> None:
     mock_security = Mock(spec=SecurityManager)
     handler = DefaultCommandHandler()
     state = DefaultCommandState(
-        'App', mock_root, formatter=mock_formatter, messenger=mock_messenger, security_manager=mock_security
+        'App',
+        mock_root,
+        formatter=mock_formatter,
+        messenger=mock_messenger,
+        security_manager=mock_security
     )
     handler.send_user_msg(state, None)
 
@@ -298,8 +345,11 @@ def test_default_handler(mock_messenger: Mock) -> None:
     mock_formatter.user_msg.assert_called_with(state.query)
     mock_messenger.assert_called_with(mock_formatter.user_msg.return_value)
 
-    # Check that each handle method calls send_query_msg with the state as an argument.
-    with mock.patch.object(handler, 'send_query_msg', autospec=True) as mock_send_query_msg:
+    # Check that each handle method calls send_query_msg with the state as an
+    # argument.
+    with mock.patch.object(
+        handler, 'send_query_msg', autospec=True
+    ) as mock_send_query_msg:
         for method in [
             handler.handle_cmd_help,
             handler.handle_error,
@@ -313,12 +363,16 @@ def test_default_handler(mock_messenger: Mock) -> None:
             mock_send_query_msg.assert_called_with(state)
             mock_send_query_msg.reset_mock()
 
-    # Check that the security manager calls raise_if_cannot_execute on the state for DefaultCommandHandler.pre_execute.
+    # Check that the security manager calls raise_if_cannot_execute on the state
+    # for DefaultCommandHandler.pre_execute.
     handler.pre_execute(state)
     mock_security.raise_if_cannot_execute.assert_called_with(state)
 
-    # Have mock_security raise a SecurityException and ensure it is transformed into an execution error.
+    # Have mock_security raise a SecurityException and ensure it is transformed
+    # into an execution error.
     error = SecurityError()
     mock_security.raise_if_cannot_execute.side_effect = error
-    with br.raises(CommandErrors.ExecutionError(error=error, query=state.query)):
+    with enough.raises(CommandErrors.ExecutionError(
+        error=error, query=state.query
+    )):
         handler.pre_execute(state)

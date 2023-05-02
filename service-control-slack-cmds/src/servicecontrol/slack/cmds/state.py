@@ -4,7 +4,13 @@ from enough import JSONType
 from slack_bolt import App
 from slack_sdk import WebClient
 
-from keywordcommands import CommandGroup, DefaultQueryFormatter, QueryFormatter, SecurityManager, UserState
+from keywordcommands import (
+    CommandGroup,
+    DefaultQueryFormatter,
+    QueryFormatter,
+    SecurityManager,
+    UserState
+)
 
 
 class SlackCommandsState(UserState[str]):
@@ -35,10 +41,17 @@ class SlackCommandsState(UserState[str]):
         :param root: Root command group to use.
         :param bolt: Slack bolt application object to use.
         :param log: Logger to use to log errors and informational messages.
-        :param formatter: Formatter to use to format :class:`.QueryInfo` instances.
+        :param formatter: Formatter to use to format :class:`.QueryInfo`
+            instances.
         :param security_manager: Security manager to use.
         """
-        super().__init__(name, root, formatter=formatter, messenger=self.user_msg, security_manager=security_manager)
+        super().__init__(
+            name,
+            root,
+            formatter=formatter,
+            messenger=self.user_msg,
+            security_manager=security_manager
+        )
         self.bolt = bolt
         self.command = None
         self.log = log
@@ -71,6 +84,9 @@ class SlackCommandsState(UserState[str]):
         """Sends the given message to the given user on Slack.
 
         :param msg: Message to send.
-        :param user_id: ID of user to send message to. If unspecified, sent to the calling user.
+        :param user_id: ID of user to send message to. If unspecified, sent to
+            the calling user.
         """
-        self.bolt.client.chat_postMessage(channel=user_id or self.user, text=msg)
+        self.bolt.client.chat_postMessage(
+            channel=user_id or self.user, text=msg
+        )

@@ -12,12 +12,18 @@ from servicecontrol.everyaction.contacts import EAContactsService
 
 
 class EASheetSyncService(Service):
-    """Service which syncs google sheets to contact information according to who has a particular Activist Code."""
+    """Service which syncs google sheets to contact information according to who
+    has a particular Activist Code.
+    """
 
-    # The background RGB values for a cell which has suppressed data (e.g., 'Do Not Call').
-    _SUPPRESSION_COLORS: Final[tuple[float, float, float]] = (0.996, 0.212, 0.212)
+    # The background RGB values for a cell which has suppressed data
+    # (e.g., 'Do Not Call').
+    _SUPPRESSION_COLORS: Final[tuple[float, float, float]] = (
+        0.996, 0.212, 0.212
+    )
 
-    #: The amount of time in seconds to wait before two successive syncs by default.
+    #: The amount of time in seconds to wait before two successive syncs by
+    # default.
     DEFAULT_PERIOD: Final[int] = 3600
 
     NAME: Final[str] = 'everyaction-sheetsync'
@@ -26,12 +32,16 @@ class EASheetSyncService(Service):
         'type': 'object',
         'properties': {
             'code-to-sheet': {
-                'description': 'Mapping from Activist Code names to the sheet they should sync to.',
+                'description':
+                    'Mapping from Activist Code names to the sheet they should'
+                    'sync to.',
                 'type': 'object',
                 'additionalProperties': {'type': 'string'}
             },
             'period': {
-                'description': 'Time in seconds to wait between two successive syncs (1 hour by default).',
+                'description':
+                    'Time in seconds to wait between two successive syncs'
+                    '(1 hour by default).',
                 'type': 'integer'
             }
         },
@@ -56,7 +66,8 @@ class EASheetSyncService(Service):
 
     @staticmethod
     def _add_suppression_color(cell: JSONType) -> None:
-        # Helper function to add a red background for information which has a suppression.
+        # Helper function to add a red background for information which has a
+        # suppression.
         cell['userEnteredFormat'] = {
             'backgroundColor': {
                 'red': EASheetSyncService._SUPPRESSION_COLORS[0],
@@ -67,16 +78,22 @@ class EASheetSyncService(Service):
 
     @staticmethod
     def _sheet_str_row(*values: str) -> JSONType:
-        # Helper function to create the proper JSON for user-entered values in a Google sheet given 1 or more values.
-        return {'values': [{'userEnteredValue': {'stringValue': v}} for v in values]}
+        # Helper function to create the proper JSON for user-entered values in a
+        # Google sheet given 1 or more values.
+        return {
+            'values': [{'userEnteredValue': {'stringValue': v}} for v in values]
+        }
 
     def _schedule_update(self) -> None:
         # Update the sheets and schedule the next update.
         self._update_sheets()
         self._scheduler.enter(self._period, 1, self._schedule_update)
 
-    def _update_sheet(self, sheet_id: str, contacts: Sequence[JSONType]) -> None:
-        # Update the spreadsheet with the given ID to contain the given contacts.
+    def _update_sheet(
+        self, sheet_id: str, contacts: Sequence[JSONType]
+    ) -> None:
+        # Update the spreadsheet with the given ID to contain the given
+        # contacts.
         rows = [self._sheet_str_row('First', 'Last', 'Email', 'Phone')]
         for c in contacts:
             row = self._sheet_str_row(
@@ -108,8 +125,11 @@ class EASheetSyncService(Service):
     def _update_sheets(self) -> None:
         # Update each spreadsheet.
 
-        # More efficient to get all needed contacts once instead of getting them for each code that applies to them.
-        all_contacts = self._contacts.find(codes=list(self._code_to_sheet.keys()))
+        # More efficient to get all needed contacts once instead of getting them
+        # for each code that applies to them.
+        all_contacts = self._contacts.find(
+            codes=list(self._code_to_sheet.keys())
+        )
         code_to_contacts = {c: [] for c in self._code_to_sheet}
         for contact in all_contacts:
             for code in contact['codes']:
@@ -129,13 +149,18 @@ class EASheetSyncService(Service):
         """Initializes this service from the given config and dependencies.
 
         :param config: Config to initialize with.
-        :param activist_code_cache: Cached activist codes to use to get Activist code information.
-        :param ea_contacts: The database of EveryAction contacts to get contact information from.
+        :param activist_code_cache: Cached activist codes to use to get Activist
+            code information.
+        :param ea_contacts: The database of EveryAction contacts to get contact
+            information from.
         :param google_sheets: The Google Sheets API resource.
         :param scheduler: The scheduler to use to schedule sheet syncing.
         """
         super().__init__(config)
-        self._code_to_sheet = {activist_code_cache[k].id: v for k, v in config['code-to-sheet'].items()}
+        self._code_to_sheet = {
+            activist_code_cache[k].id: v
+            for k, v in config['code-to-sheet'].items()
+        }
         self._period = config.get('period', self.DEFAULT_PERIOD)
 
         self._contacts = ea_contacts
@@ -144,5 +169,6 @@ class EASheetSyncService(Service):
 
     def start(self) -> None:
         """Starts scheduling Google Sheet syncs."""
-        # Do it this way so start terminates before the spreadsheets need to be updated.
+        # Do it this way so start terminates before the spreadsheets need to be
+        # updated.
         self._scheduler.enter(0.01, 1, self._schedule_update)

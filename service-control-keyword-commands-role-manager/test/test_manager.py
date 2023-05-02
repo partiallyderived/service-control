@@ -1,10 +1,12 @@
 from keywordcommands import Command, CommandGroup
 
-from servicecontrol.keywordcommands.manager import KeywordCommandsRoleManagerService
+from servicecontrol.keywordcommands.manager import (
+    KeywordCommandsRoleManagerService
+)
 
-cmd1 = Command('', lambda s: s)
-cmd2 = Command('', lambda s: s)
-cmd3 = Command('', lambda s: s)
+cmd1 = Command('', lambda state: state)
+cmd2 = Command('', lambda state: state)
+cmd3 = Command('', lambda state: state)
 group1 = CommandGroup('', edge1=cmd1, edge2=cmd2)
 group2 = CommandGroup('', edge3=cmd3, edge4=group1)
 
@@ -49,5 +51,4 @@ def test_manager() -> None:
     }
     data = {}
     # noinspection PyTypeChecker
-    manager = KeywordCommandsRoleManagerService(config, data)
-
+    KeywordCommandsRoleManagerService(config, data)

@@ -34,13 +34,15 @@ TM = TypeVar('TM', bound=object, contravariant=True)
 TM1 = TypeVar('TM1', bound=object, contravariant=True)
 TM2 = TypeVar('TM2', bound=object, contravariant=True)
 
-# Additional object type vars whose names may be more suitable depending on the context.
+# Additional object type vars whose names may be more suitable depending on the
+# context.
 # Object type vars for "keys".
 K = TypeVar('K', bound=object)
 K1 = TypeVar('K1', bound=object)
 K2 = TypeVar('K2', bound=object)
 
-# Covariant "key" type vars (note that key type vars are usually invariant or contravariant).
+# Covariant "key" type vars (note that key type vars are usually invariant or
+# contravariant).
 KP = TypeVar('KP', bound=object, covariant=True)
 KP1 = TypeVar('KP1', bound=object, covariant=True)
 KP2 = TypeVar('KP2', bound=object, covariant=True)
@@ -64,7 +66,8 @@ VP = TypeVar('VP', bound=object, covariant=True)
 VP1 = TypeVar('VP1', bound=object, covariant=True)
 VP2 = TypeVar('VP2', bound=object, covariant=True)
 
-# Contravariant "value" type vars (note that value type vars are typically invariant or covariant).
+# Contravariant "value" type vars (note that value type vars are typically
+# invariant or covariant).
 VM = TypeVar('VM', bound=object, contravariant=True)
 VM1 = TypeVar('VM1', bound=object, contravariant=True)
 VM2 = TypeVar('VM2', bound=object, contravariant=True)

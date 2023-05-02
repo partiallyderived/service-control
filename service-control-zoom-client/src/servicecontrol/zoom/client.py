@@ -83,12 +83,16 @@ class ZoomClientService(Service):
         resp = self._session.post(
             self.TOKEN_URL,
             auth=self._auth,
-            params={'grant_type': 'refresh_token', 'refresh_token': self._refresh_token},
+            params={
+                'grant_type': 'refresh_token',
+                'refresh_token': self._refresh_token
+            },
             headers={'Content-Type': 'application/x-www-form-urlencoded'}
         )
         resp.raise_for_status()
-        # Set expiration time one minute beforehand to avoid a situation where the token has not expired when we check
-        # the expiration time but has expired before the serve received the request.
+        # Set expiration time one minute beforehand to avoid a situation where
+        # the token has not expired when we check the expiration time but has
+        # expired before the serve received the request.
         self._expire_time = time.time() + resp.json()['expires_in'] - 60
         self._token = resp.json()['access_token']
         self._refresh_token = resp.json()['refresh_token']
@@ -109,7 +113,8 @@ class ZoomClientService(Service):
     def install(self) -> None:
         """Installs this service.
 
-        :raise ValueError: If "refresh" was not specified in the config for this service.
+        :raise ValueError: If "refresh" was not specified in the config for this
+            service.
         """
         if not self._refresh_token:
             raise ValueError('"refresh" must be specified for installation.')
@@ -119,7 +124,7 @@ class ZoomClientService(Service):
     def installed(self) -> bool:
         """Determines whether this service is installed.
 
-        :return: :code:`True` if this service is installed, :code:`False` otherwise.
+        :return: ``True`` if this service is installed, ``False`` otherwise.
         """
         return self.name in self._data
 
@@ -134,7 +139,9 @@ class ZoomClientService(Service):
         self._refresh()
 
     def stop(self) -> None:
-        """Stops this service. Afterwards, it will no longer be able to send requests."""
+        """Stops this service. Afterwards, it will no longer be able to send
+        requests.
+        """
         self._session.close()
 
     def delete(self, path: str, **kwargs: object) -> Response:

@@ -13,7 +13,7 @@ V = TypeVar('V', covariant=True)
 
 
 class CacheProto(Protocol[K, V]):
-    """Protocol to use for caches, which differs somewhat from :code:`Mapping`."""
+    """Protocol to use for caches, which differs somewhat from ``Mapping``."""
     def __getitem__(self, key: K) -> V:
         ...
 
@@ -33,7 +33,9 @@ class Cache(Generic[K, V], ABC):
         ...
 
     def __init__(self) -> None:
-        """Initializes this cache by initializing a mapping from keys to resources."""
+        """Initializes this cache by initializing a mapping from keys to
+        resources.
+        """
         self.resources = {}
 
     def __getitem__(self, key: K) -> V:
@@ -41,7 +43,8 @@ class Cache(Generic[K, V], ABC):
 
         :param key: The key to get the resource with.
         :return: The resulting resource.
-        :raise KeyError: If no value for :code:`key` could be found even after refreshing.
+        :raise KeyError: If no value for ``key`` could be found even after
+            refreshing.
         """
         value = self.get(key)
         if value is None:
@@ -49,11 +52,12 @@ class Cache(Generic[K, V], ABC):
         return value
 
     def get(self, key: K) -> V | None:
-        """Gets the resources associated with the given key and updates the cached value for that key.
+        """Gets the resources associated with the given key and updates the
+        cached value for that key.
 
         :param key: The key to get the resource for.
-        :return: The resulting resource, or :code:`None` if no resource could be found for :code:`key` even after
-            refreshing.
+        :return: The resulting resource, or ``None`` if no resource could be
+            found for ``key`` even after refreshing.
         """
         resource = self.resources.get(key)
         if resource is None:
@@ -65,8 +69,9 @@ class Cache(Generic[K, V], ABC):
 
 # noinspection PyAbstractClass
 class CaseInsensitiveCache(Cache[K, V]):
-    """A cache which has case-insensitive keys when they are strings. Implementations are responsible for making sure
-    that only lowercase string keys are put into :code:`self.resources`.
+    """A cache which has case-insensitive keys when they are strings.
+    Implementations are responsible for making sure that only lowercase string
+    keys are put into ``self.resources``.
     """
     def __getitem__(self, key: K) -> V:
         if isinstance(key, str):
@@ -75,7 +80,9 @@ class CaseInsensitiveCache(Cache[K, V]):
 
 
 class ListCache(Cache[K, V]):
-    """A cache which uses a given function to list all of a certain kind of resource."""
+    """A cache which uses a given function to list all of a certain kind of
+    resource.
+    """
 
     _list_fn: Callable[[], Iterable[V]]
 
@@ -86,12 +93,13 @@ class ListCache(Cache[K, V]):
 
     @abstractmethod
     def _keys(self, resource: V) -> Iterable[K]:
-        # A useful abstraction in the case of EveryAction, where resources could have either a name, an ID, or both, and
-        # we want to cache each case.
+        # A useful abstraction in the case of EveryAction, where resources could
+        # have either a name, an ID, or both, and we want to cache each case.
         ...
 
     def __init__(self, list_fn: Callable[[], Iterable[V]]) -> None:
-        """Initializes a ListCache using the given callable to list each resource.
+        """Initializes a ListCache using the given callable to list each
+        resource.
 
         :param list_fn: The callable returning a collection of every resource.
         """
@@ -99,8 +107,8 @@ class ListCache(Cache[K, V]):
         self._list_fn = list_fn
 
     def refresh(self) -> None:
-        """Refreshes this cache by reloading the list of all its resources. Automatically called when a resource could
-        not be found.
+        """Refreshes this cache by reloading the list of all its resources.
+        Automatically called when a resource could not be found.
         """
         self.resources.clear()
         for resource in self._list_fn():
@@ -114,8 +122,9 @@ class CaseInsensitiveListCache(ListCache[K, V], CaseInsensitiveCache[K, V]):
 
 
 class NameListCache(CaseInsensitiveListCache[str, V]):
-    """Cache which uses a given function to list all of a certain kind of resource and maintains a mapping from
-    case-insensitive resource names to the resource.
+    """Cache which uses a given function to list all of a certain kind of
+    resource and maintains a mapping from case-insensitive resource names to the
+    resource.
     """
 
     def _keys(self, resource: V) -> list[str]:
@@ -123,8 +132,9 @@ class NameListCache(CaseInsensitiveListCache[str, V]):
 
 
 class IDNameListCache(CaseInsensitiveListCache[int | str, V]):
-    """Cache which uses a given function to list all of a certain kind of resource and maintains both a mapping from
-    the resource int IDs to the resource and the resource string names to the resource.
+    """Cache which uses a given function to list all of a certain kind of
+    resource and maintains both a mapping from the resource int IDs to the
+    resource and the resource string names to the resource.
     """
 
     def _keys(self, resource: V) -> list[int | str]:
@@ -132,8 +142,9 @@ class IDNameListCache(CaseInsensitiveListCache[int | str, V]):
 
 
 class ResourceNameListCaches(CaseInsensitiveCache[str, ListCache[K, V]]):
-    """A collection of caches for different resources which have similar ways of listing all 'sub-resources' (i.e.,
-    change types for a changed entity resource) by passing the name of the top-level resource to a function.
+    """A collection of caches for different resources which have similar ways of
+    listing all 'sub-resources' (i.e., change types for a changed entity
+    resource) by passing the name of the top-level resource to a function.
     """
 
     _valid_resource_fn: Callable[[str], bool]
@@ -144,7 +155,8 @@ class ResourceNameListCaches(CaseInsensitiveCache[str, ListCache[K, V]]):
         if not self._valid_resource_fn(resource):
             return None
 
-        # See if we already have the cache. If we do, refresh it. Otherwise, create it.
+        # See if we already have the cache. If we do, refresh it. Otherwise,
+        # create it.
         cache = self.resources.get(resource)
         if cache is not None:
             cache.refresh()
@@ -158,10 +170,13 @@ class ResourceNameListCaches(CaseInsensitiveCache[str, ListCache[K, V]]):
         valid_resource_fn: Callable[[str], bool],
         cache_factory: Callable[[str], ListCache[K, V]]
     ) -> None:
-        """Initializes this cache by using the given function to list all sub-resources using the name of the resource.
+        """Initializes this cache by using the given function to list all
+        sub-resources using the name of the resource.
 
-        :param valid_resource_fn: The function to use to determine whether a particular top-level resource is valid.
-        :param cache_factory: The function to use to create list caches from a string.
+        :param valid_resource_fn: The function to use to determine whether a
+            particular top-level resource is valid.
+        :param cache_factory: The function to use to create list caches from a
+            string.
         """
         super().__init__()
         self._valid_resource_fn = valid_resource_fn
@@ -200,10 +215,13 @@ class EACacheService(Service):
     entity_fields_cache: ResourceNameListCaches[str, ChangedEntityField] | None
 
     def _is_valid_entity(self, name: str) -> bool:
-        # Detects whether the given name is a valid entity for changed entity export jobs.
+        # Detects whether the given name is a valid entity for changed entity
+        # export jobs.
         if name.lower() in self.changed_entities:
             return True
-        self.changed_entities = set(r.lower() for r in self._ea.changed_entities.resources())
+        self.changed_entities = set(
+            r.lower() for r in self._ea.changed_entities.resources()
+        )
         return name.lower() in self.changed_entities
 
     def __init__(self, config: JSONType, ea: EAClient) -> None:
@@ -222,10 +240,14 @@ class EACacheService(Service):
     def start(self) -> None:
         """Starts this service by creating each cache."""
         # noinspection PyTypeChecker
-        self.activist_codes_cache = IDNameListCache(lambda: self._ea.activist_codes.list(limit=0))
+        self.activist_codes_cache = IDNameListCache(
+            lambda: self._ea.activist_codes.list(limit=0)
+        )
         self.change_types_cache = ResourceNameListCaches(
             self._is_valid_entity,
-            lambda r: IDNameListCache(lambda: self._ea.changed_entities.change_types(r))
+            lambda r: IDNameListCache(
+                lambda: self._ea.changed_entities.change_types(r)
+            )
         )
         self.entity_fields_cache = ResourceNameListCaches(
             self._is_valid_entity,

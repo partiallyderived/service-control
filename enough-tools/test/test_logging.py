@@ -1,15 +1,15 @@
 from logging import Logger
 from unittest.mock import Mock
 
-import enough as br
+import enough
 from enough import SplitLevelLogger
-from enough.exceptions import BRLoggingErrors
+from enough.exceptions import EnoughLoggingErrors
 
 
 def test_split_level_logger() -> None:
     # Test SplitLevelLogger, which should delegate logging to other loggers.
     # Test that empty level_to_logger results in an error.
-    with br.raises(BRLoggingErrors.EmptyMap()):
+    with enough.raises(EnoughLoggingErrors.EmptyMap()):
         SplitLevelLogger('empty', {})
 
     level_to_logger = {
@@ -22,7 +22,8 @@ def test_split_level_logger() -> None:
     mock20: Mock = level_to_logger[20].log
 
     def assert_and_reset(level: int, msg: str, mock: Mock) -> None:
-        # Verify that the _log function was called with the given level and message and then reset the mock.
+        # Verify that the _log function was called with the given level and
+        # message and then reset the mock.
         mock.assert_called()
         assert mock.call_args.args[:2] == (level, msg)
         mock.reset_mock()
@@ -49,7 +50,8 @@ def test_split_level_logger() -> None:
     split_logger.log(5, 'msg')
     assert_and_reset(5, 'msg', mock5)
 
-    # Try with a level below 5, which should call the logger configured with the lowest level.
+    # Try with a level below 5, which should call the logger configured with the
+    # lowest level.
     split_logger.log(3, 'msg')
     assert_and_reset(3, 'msg', mock5)
 

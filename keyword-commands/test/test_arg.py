@@ -1,4 +1,4 @@
-import enough as br
+import enough
 
 from keywordcommands import Arg
 from keywordcommands.exceptions import ArgInitContext
@@ -15,9 +15,9 @@ def test_init() -> None:
     Arg('Arg 2', 'arg-2')
 
     # This should fail.
-    with br.raises(ArgInitContext.MalformedName(name='arg#')):
+    with enough.raises(ArgInitContext.MalformedName(name='arg#')):
         Arg('Arg 3', 'arg#')
 
     # As should this.
-    with br.raises(ArgInitContext.MalformedName(name='arg_4')):
+    with enough.raises(ArgInitContext.MalformedName(name='arg_4')):
         Arg('Arg 4', 'arg_4')

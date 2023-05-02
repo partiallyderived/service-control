@@ -31,8 +31,9 @@ def test_delimited_parser() -> None:
 
 
 def test_delimited_decorator_factory() -> None:
-    # Test parsers.delimited, whose return values are decorators which turn functions into delimited parsers which call
-    # that function to parse each element.
+    # Test parsers.delimited, whose return values are decorators which turn
+    # functions into delimited parsers which call that function to parse each
+    # element.
 
     # Default should be comma-separated parser.
     @parsers.delimited()
@@ -44,11 +45,16 @@ def test_delimited_decorator_factory() -> None:
     assert int_csv_parser('1,2,3,4') == [1, 2, 3, 4]
 
     # Now with parameters.
-    @parsers.delimited(delim_name='semi-colon', delimiter=';', elem_name='integers')
+    @parsers.delimited(
+        delim_name='semi-colon', delimiter=';', elem_name='integers'
+    )
     def int_semi_colon_parser(arg: str) -> int:
         return int(arg)
 
-    assert int_semi_colon_parser.expected_format == 'Semi-colon-separated list of integers'
+    assert (
+        int_semi_colon_parser.expected_format
+        == 'Semi-colon-separated list of integers'
+    )
     assert int_semi_colon_parser('1;2;3;4') == [1, 2, 3, 4]
 
     # Check that the delimiter uses itself as its name by default.
@@ -91,8 +97,16 @@ def test_role_parser(user_state: StrUserState, role_empty: CommandRole) -> None:
 
 
 def test_roles_parser(
-    user_state: StrUserState, role_empty: CommandRole, role1: CommandRole, role2: CommandRole
+    user_state: StrUserState,
+    role_empty: CommandRole,
+    role1: CommandRole,
+    role2: CommandRole
 ) -> None:
-    # Test parsers.roles_parser, which should parse multiple CommandRoles from a comma-separated string.
-    assert parsers.roles_parser.expected_format == 'Comma-separated list of roles'
-    assert parsers.roles_parser('empty,RoLe1,ROLE2', user_state) == [role_empty, role1, role2]
+    # Test parsers.roles_parser, which should parse multiple CommandRoles from a
+    # comma-separated string.
+    assert (
+        parsers.roles_parser.expected_format == 'Comma-separated list of roles'
+    )
+    assert parsers.roles_parser(
+        'empty,RoLe1,ROLE2', user_state
+    ) == [role_empty, role1, role2]

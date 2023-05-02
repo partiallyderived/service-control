@@ -28,7 +28,9 @@ def test_service() -> None:
         'name': 'test-name'
     }
     mock_slack = Mock(spec=WebClient)
-    with mock.patch('servicecontrol.slack.logservice.log.slack_logger', autospec=True) as mock_slack_logger:
+    with mock.patch(
+        'servicecontrol.slack.logservice.log.slack_logger', autospec=True
+    ) as mock_slack_logger:
         service = SlackLogService(config, mock_slack)
         mock_slack_logger.assert_called_with(mock_slack, 'test-name', [
             (logging.getLevelName('INFO'), 'C1', '-- %(message)s --'),
@@ -36,8 +38,12 @@ def test_service() -> None:
             (logging.getLevelName('ERROR'), 'C3', '__%(message)s__')
         ])
         assert service.slack_log == mock_slack_logger.return_value
-        mock_slack_logger.return_value.setLevel.assert_called_with(logging.getLevelName('DEBUG'))
-        with pytest.raises(ValueError, match='Unrecognized logging level name "INF"'):
+        mock_slack_logger.return_value.setLevel.assert_called_with(
+            logging.getLevelName('DEBUG')
+        )
+        with pytest.raises(
+            ValueError, match='Unrecognized logging level name "INF"'
+        ):
             # Test that unrecognized level name 'INF' results in an error.
             config['level-configs'][0]['level'] = 'INF'
             SlackLogService(config, mock_slack)

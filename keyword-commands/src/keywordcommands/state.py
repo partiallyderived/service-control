@@ -11,7 +11,9 @@ from keywordcommands.security import SecurityManager
 
 
 class CommandState:
-    """Represents a state with objects needed for command handling and execution."""
+    """Represents a state with objects needed for command handling and
+    execution.
+    """
 
     #: :class:`.QueryInfo` instance describing the user's input.
     query: QueryInfo
@@ -25,12 +27,14 @@ class CommandState:
         self.query = QueryInfo(name, root)
 
     def reset(self) -> None:
-        """Call this to restore :code:`self` to its initial state."""
+        """Call this to restore ``self`` to its initial state."""
         self.query = QueryInfo(self.query.name, self.query.root)
 
 
 class DefaultCommandState(CommandState):
-    """:class:`.CommandState` containing state information needed by :class:`.DefaultCommandHandler`."""
+    """:class:`.CommandState` containing state information needed by
+    :class:`.DefaultCommandHandler`.
+    """
     #: Formatter to use to format :class:`.QueryInfo` instances.
     formatter: QueryFormatter
 
@@ -52,11 +56,12 @@ class DefaultCommandState(CommandState):
         """Initializes this from the given top-level application data.
 
         :param name: Name of the top-level application.
-        :param root: Root :class:`.CommandGroup` from which all commands originate.
+        :param root: Root :class:`.CommandGroup` from which all commands
+            originate.
         :param formatter: Formatter to use to format query messages.
         :param messenger: Callable to use to send user messages.
-        :param security_manager: Security manager to use to check when an action may be performed. If unspecified, all
-            actions are permitted.
+        :param security_manager: Security manager to use to check when an action
+            may be performed. If unspecified, all actions are permitted.
         """
         super().__init__(name, root)
         self.formatter = formatter or DefaultQueryFormatter()

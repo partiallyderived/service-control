@@ -20,8 +20,8 @@ class EAClientService(Service):
             },
             'key': {
                 'description': (
-                    'The EveryAction API key. Must end with |0 or |1 to indicate VoterFile or MyCampaign mode '
-                    'respectively.',
+                    'The EveryAction API key. Must end with |0 or |1 to '
+                    'indicate VoterFile or MyCampaign mode respectively.',
                 ),
                 'type': 'string'
             }

@@ -8,7 +8,9 @@ from servicecontrol.core import Service
 
 
 class SlackBoltService(Service):
-    """Provides a Slack Bolt application object and the corresponding Slack client."""
+    """Provides a Slack Bolt application object and the corresponding Slack
+    client.
+    """
 
     EXPORTS: Final[frozenset[str]] = frozenset({'slack', 'slack_bolt'})
     NAME: Final[str] = 'slack-bolt'
@@ -41,5 +43,7 @@ class SlackBoltService(Service):
         :param config: Config to initialize with.
         """
         super().__init__(config)
-        self.slack_bolt = App(signing_secret=config['secret'], token=config['token'])
+        self.slack_bolt = App(
+            signing_secret=config['secret'], token=config['token']
+        )
         self.slack = self.slack_bolt.client

@@ -2,7 +2,9 @@ from unittest.mock import Mock
 
 from google.oauth2.credentials import Credentials
 
-from servicecontrol.google.services import GoogleCredsService, GoogleSheetsService
+from servicecontrol.google.services import (
+    GoogleCredsService, GoogleSheetsService
+)
 from servicecontrol.tools.data import DataDict
 
 

@@ -6,8 +6,9 @@ import servicecontrol.slack.logservice.log as log
 
 
 def test_slack_logger() -> None:
-    # Test that slack_logger creates a SplitLevelLogger that sends Slack messages to different conversations in Slack
-    # depending on the log level that messages was sent with.
+    # Test that slack_logger creates a SplitLevelLogger that sends Slack
+    # messages to different conversations in Slack depending on the log level
+    # that messages was sent with.
     mock_slack = Mock(spec=WebClient)
     mock_msg = mock_slack.chat_postMessage
     configs = [

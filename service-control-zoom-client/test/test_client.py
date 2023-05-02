@@ -21,7 +21,9 @@ def test_zoom_client(data: DataDict) -> None:
         'refresh': 'Zoom Refresh Token',
         'secret': 'Zoom Secret'
     }
-    with mock.patch('servicecontrol.zoom.client.Session', autospec=True) as mock_session_type:
+    with mock.patch(
+        'servicecontrol.zoom.client.Session', autospec=True
+    ) as mock_session_type:
         client = ZoomClientService(config, data)
         client.name = client.NAME
         assert client._auth == ('Zoom ID', 'Zoom Secret')
@@ -41,16 +43,22 @@ def test_zoom_client(data: DataDict) -> None:
             'refresh_token': 'New Refresh Token'
         }
 
-        # Mock time.time so we can see how client behaves with regards to when the token refreshes.
+        # Mock time.time so we can see how client behaves with regards to when
+        # the token refreshes.
         with mock.patch('time.time') as mock_time:
             mock_time.return_value = 1000
             client._refresh()
-            assert client._refresh_token == 'New Refresh Token'  # Should have gotten new one.
+
+            # Should have gotten new refresh token.
+            assert client._refresh_token == 'New Refresh Token'
 
             mock_post.assert_called_with(
                 ZoomClientService.TOKEN_URL,
                 auth=client._auth,
-                params={'grant_type': 'refresh_token', 'refresh_token': 'Zoom Refresh Token'},
+                params={
+                    'grant_type': 'refresh_token',
+                    'refresh_token': 'Zoom Refresh Token'
+                },
                 headers={'Content-Type': 'application/x-www-form-urlencoded'}
             )
             assert client._token == 'Zoom Token'
@@ -61,7 +69,9 @@ def test_zoom_client(data: DataDict) -> None:
             mock_time.reset_mock()
             mock_time.return_value = 1500
             mock_post_response.json.return_value = {
-                'access_token': 'Other Token', 'expires_in': 2500, 'refresh_token': 'Newer Refresh Token'
+                'access_token': 'Other Token',
+                'expires_in': 2500,
+                'refresh_token': 'Newer Refresh Token'
             }
             mock_get = mock_session.get
             mock_get_response = mock_get.return_value
@@ -71,7 +81,8 @@ def test_zoom_client(data: DataDict) -> None:
             assert client._token == 'Zoom Token'
             assert client._expire_time == 1000 + 3500 - 60
 
-            # Check that expected calls were there, including having authorization header added.
+            # Check that expected calls were there, including having
+            # authorization header added.
             mock_get = mock_session.get
             assert resp == mock_get_response
             mock_get_response.raise_for_status.assert_called()
@@ -83,8 +94,8 @@ def test_zoom_client(data: DataDict) -> None:
             )
             mock_get.reset_mock()
 
-            # Test that token is detected as being expired and that headers kwarg will be added to instead of
-            # replaced.
+            # Test that token is detected as being expired and that headers
+            # kwarg will be added to instead of replaced.
             mock_time.return_value = 5000
             client.get('users', headers={'my-header': 'my-value'})
             assert client._token == 'Other Token'
@@ -92,7 +103,10 @@ def test_zoom_client(data: DataDict) -> None:
             assert client._refresh_token == 'Newer Refresh Token'
             mock_get.assert_called_with(
                 f'{ZoomClientService.BASE}/users',
-                headers={'my-header': 'my-value', 'Authorization': f'Bearer {client._token}'}
+                headers={
+                    'my-header': 'my-value',
+                    'Authorization': f'Bearer {client._token}'
+                }
             )
 
             # Test that each verb works correctly.
@@ -100,4 +114,6 @@ def test_zoom_client(data: DataDict) -> None:
                 for verb in ['delete', 'get', 'patch', 'post', 'put']:
                     method = getattr(client, verb)
                     method('path', kwarg1='val1', kwarg2='val2')
-                    mock_send.assert_called_with(verb, 'path', kwarg1='val1', kwarg2='val2')
+                    mock_send.assert_called_with(
+                        verb, 'path', kwarg1='val1', kwarg2='val2'
+                    )

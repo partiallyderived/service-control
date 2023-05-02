@@ -1,7 +1,9 @@
 from keywordcommands.arg import Arg
 from keywordcommands.command import command, Command
 from keywordcommands.example import Example
-from keywordcommands.format import DefaultQueryFormatFns, DefaultQueryFormatter, QueryFormatFns, QueryFormatter
+from keywordcommands.format import (
+    DefaultQueryFormatFns, DefaultQueryFormatter, QueryFormatFns, QueryFormatter
+)
 from keywordcommands.group import CommandGroup
 from keywordcommands.handler import CommandHandler, DefaultCommandHandler
 from keywordcommands.parser import parser, Parser

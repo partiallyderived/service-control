@@ -32,7 +32,8 @@ class MongoDBService(Service):
         :param config: Config to initialize with.
         """
         super().__init__(config)
-        self.mongo = MongoClient(config['url'], connect=False)  # Wait to connect until actually used.
+        # Wait to connect until actually used.
+        self.mongo = MongoClient(config['url'], connect=False)
 
     def start(self) -> None:
         """Connects to the database."""
